@@ -764,32 +764,32 @@ export default function MenuPage() {
       {/* Menu Items Tab */}
       {activeTab === "items" && (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-primary">Menu Items</h2>
-            <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary">Menu Items</h2>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => setCsvUploadOpen(true)}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Upload CSV</span>
               </button>
               <button
                 onClick={() => openItemModal()}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Add Item</span>
               </button>
             </div>
           </div>
 
-          <div className="flex gap-4 mb-4 items-right">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
             <button
               onClick={() => openDeleteModal(true)}
-              className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
+              className="bg-red-500 text-white hover:bg-red-600 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Delete All</span>
             </button>
             <button
@@ -799,15 +799,16 @@ export default function MenuPage() {
                 selectedItems.length === 0
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-red-500 text-white hover:bg-red-600"
-              } px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md`}
+              } px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base`}
             >
-              <Trash2 className="w-5 h-5" />
-              <span>Delete Selected ({selectedItems.length})</span>
+              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Delete Selected ({selectedItems.length})</span>
+              <span className="sm:hidden">Delete ({selectedItems.length})</span>
             </button>
           </div>
 
-          {/* Menu Items Table */}
-          <div className="border rounded-lg overflow-hidden shadow-md">
+          {/* Menu Items Table - Desktop */}
+          <div className="hidden md:block border rounded-lg overflow-hidden shadow-md">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -894,17 +895,65 @@ export default function MenuPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Menu Items Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {filteredMenuItems.map((item) => (
+              <div key={item.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(item.id)}
+                      onChange={() => toggleItemSelection(item.id)}
+                      className="form-checkbox h-4 w-4 text-primary focus:ring-primary focus:ring-2"
+                    />
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-sm">{item.name}</h3>
+                      <p className="text-xs text-gray-500">{getCategoryName(item.category_id)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => openItemModal(item)}
+                      className="text-indigo-600 hover:text-indigo-900 p-1"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="text-red-600 hover:text-red-900 p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-gray-900">₹{item.price.toFixed(2)}</span>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      item.is_available
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {item.is_available ? "Available" : "Unavailable"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Categories Tab - simplified for now */}
       {activeTab === "categories" && (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Categories</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h2 className="text-xl sm:text-2xl font-semibold">Categories</h2>
             <button
               onClick={() => openCategoryModal()}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg flex items-center space-x-2"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               <span>Add Category</span>
@@ -913,7 +962,7 @@ export default function MenuPage() {
 
           <div className="grid gap-4">
             {/* Categories Table (Desktop) */}
-            <div className="border rounded-lg overflow-hidden mt-8">
+            <div className="hidden md:block border rounded-lg overflow-hidden mt-8">
               <table className="min-w-full divide-y">
                 <thead className="bg-muted">
                   <tr>
@@ -961,6 +1010,39 @@ export default function MenuPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Categories Mobile Cards */}
+            <div className="md:hidden space-y-4 mt-4">
+              {menuCategories.map((category, index) => (
+                <div key={category.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+                        #{index + 1}
+                      </span>
+                      <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => openCategoryModal(category)}
+                        className="text-gray-600 hover:text-gray-900 p-1"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="text-red-600 hover:text-red-900 p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Display Order: {category.display_order}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

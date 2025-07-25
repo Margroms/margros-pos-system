@@ -627,7 +627,7 @@ export default function InventoryDashboard() {
           <CardHeader>
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
               <div>
-                <CardTitle>Inventory Items</CardTitle>
+                <CardTitle className="text-xl md:text-2xl">Inventory Items</CardTitle>
                 <CardDescription className="mt-1">{filteredInventory.length} items found</CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
@@ -641,11 +641,11 @@ export default function InventoryDashboard() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Dialog open={csvUploadOpen} onOpenChange={setCsvUploadOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full sm:w-auto flex-shrink-0">
-                        <Plus className="mr-2 h-4 w-4" /> Upload CSV
+                      <Button variant="outline" className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm">
+                        <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Upload CSV
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -758,8 +758,8 @@ export default function InventoryDashboard() {
                   </Dialog>
                   <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full sm:w-auto flex-shrink-0">
-                        <Plus className="mr-2 h-4 w-4" /> Add Category
+                      <Button variant="outline" className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm">
+                        <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Add Category
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
@@ -799,7 +799,7 @@ export default function InventoryDashboard() {
                   <Dialog open={addItemDialogOpen} onOpenChange={setAddItemDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
-                        className="w-full sm:w-auto flex-shrink-0"
+                        className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm"
                         onClick={() => {
                           setEditingItem(null);
                           setNewItem({
@@ -814,7 +814,7 @@ export default function InventoryDashboard() {
                           });
                         }}
                       >
-                        <Plus className="mr-2 h-4 w-4" /> Add Item
+                        <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Add Item
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-lg">
@@ -937,20 +937,24 @@ export default function InventoryDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
               <Button
                 onClick={() => openDeleteModal(true)}
                 variant="destructive"
                 disabled={inventory.length === 0}
+                className="w-full sm:w-auto text-xs sm:text-sm"
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete All
+                <Trash2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Delete All
               </Button>
               <Button
                 onClick={() => openDeleteModal(false)}
                 variant="destructive"
                 disabled={selectedItems.length === 0}
+                className="w-full sm:w-auto text-xs sm:text-sm"
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Selected ({selectedItems.length})
+                <Trash2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                <span className="hidden sm:inline">Delete Selected ({selectedItems.length})</span>
+                <span className="sm:hidden">Delete ({selectedItems.length})</span>
               </Button>
             </div>
             <Tabs defaultValue="all">
@@ -1121,7 +1125,7 @@ const InventoryList = ({
         <table className="w-full">
           <thead>
             <tr className="border-b">
-              <th className="text-left p-3">
+              <th className="text-left p-3 font-semibold">
                 <input
                   type="checkbox"
                   onChange={(e) => {
@@ -1142,28 +1146,43 @@ const InventoryList = ({
                   checked={items.length > 0 && items.every((item) => selectedItems.includes(item.id))}
                 />
               </th>
-              <th className="text-left p-3">Name</th>
-              <th className="text-left p-3">Category</th>
-              <th className="text-left p-3">Quantity</th>
-              <th className="text-left p-3">Stock Level</th>
-              <th className="text-left p-3 hidden lg:table-cell">Expiry</th>
-              <th className="text-right p-3">Actions</th>
+              <th className="text-left p-3 font-semibold">Name</th>
+              <th className="text-left p-3 font-semibold">Category</th>
+              <th className="text-left p-3 font-semibold">Quantity</th>
+              <th className="text-left p-3 font-semibold">Stock Level</th>
+              <th className="text-left p-3 font-semibold">Price</th>
+              <th className="text-left p-3 font-semibold hidden lg:table-cell">Expiry</th>
+              <th className="text-right p-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-b">
+              <tr key={item.id} className="border-b hover:bg-gray-50">
                 <td className="p-3">
                   <input
                     type="checkbox"
                     checked={selectedItems.includes(item.id)}
                     onChange={() => onSelectItem(item.id)}
+                    className="h-4 w-4 rounded"
                   />
                 </td>
-                <td className="p-3">{item.name}</td>
+                <td className="p-3 font-medium">{item.name}</td>
                 <td className="p-3">{item.inventory_categories?.name || "Uncategorized"}</td>
                 <td className="p-3">{item.quantity} {item.unit}</td>
-                <td className="p-3">{getStockStatus(item)}</td>
+                <td className="p-3">
+                  <Badge
+                    variant={
+                      getStockStatus(item) === "critical"
+                        ? "destructive"
+                        : getStockStatus(item) === "low"
+                        ? "secondary"
+                        : "default"
+                    }
+                  >
+                    {getStockStatus(item)}
+                  </Badge>
+                </td>
+                <td className="p-3 font-medium">₹{item.price.toFixed(2)}</td>
                 <td className="p-3 hidden lg:table-cell">
                   <Badge
                     variant={
@@ -1178,12 +1197,14 @@ const InventoryList = ({
                   </Badge>
                 </td>
                 <td className="p-3 text-right">
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDeleteItem(item.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center justify-end space-x-1">
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => onDeleteItem(item.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -1192,30 +1213,59 @@ const InventoryList = ({
       </div>
 
       {/* Mobile Card View */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
+      <div className="grid grid-cols-1 gap-3 md:hidden">
         {items.map((item) => (
-          <div key={item.id} className="border rounded-md p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold">{item.name}</h3>
-              <div>
-                <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
-                  <Edit className="h-4 w-4" />
+          <div key={item.id} className="border rounded-lg p-3 bg-white shadow-sm">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center space-x-2 flex-1">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item.id)}
+                  onChange={() => onSelectItem(item.id)}
+                  className="h-4 w-4 rounded"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-gray-900 truncate">{item.name}</h3>
+                  <p className="text-xs text-gray-500">{item.inventory_categories?.name || "Uncategorized"}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-1 ml-2">
+                <Button variant="ghost" size="sm" onClick={() => onEdit(item)} className="h-8 w-8 p-0">
+                  <Edit className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => onDeleteItem(item.id)}>
-                  <Trash2 className="h-4 w-4" />
+                <Button variant="ghost" size="sm" onClick={() => onDeleteItem(item.id)} className="h-8 w-8 p-0">
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             </div>
-            <p>{item.inventory_categories?.name || "Uncategorized"}</p>
-            <p>{item.quantity} {item.unit}</p>
-            <p>Stock: {getStockStatus(item)}</p>
-            <p>Expires: {getExpiryStatus(item.expiry_date)}</p>
-            <input
-              type="checkbox"
-              checked={selectedItems.includes(item.id)}
-              onChange={() => onSelectItem(item.id)}
-              className="mt-2"
-            />
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-gray-500">Quantity:</span>
+                <div className="font-medium">{item.quantity} {item.unit}</div>
+              </div>
+              <div>
+                <span className="text-gray-500">Stock:</span>
+                <div className={`font-medium ${
+                  getStockStatus(item) === "critical" ? "text-red-600" : 
+                  getStockStatus(item) === "low" ? "text-amber-600" : "text-green-600"
+                }`}>
+                  {getStockStatus(item)}
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-500">Price:</span>
+                <div className="font-medium">₹{item.price.toFixed(2)}</div>
+              </div>
+              <div>
+                <span className="text-gray-500">Expires:</span>
+                <div className={`text-xs px-1 py-0.5 rounded ${
+                  getExpiryStatus(item.expiry_date) === "expired" ? "bg-red-100 text-red-800" :
+                  getExpiryStatus(item.expiry_date) === "soon" ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"
+                }`}>
+                  {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : "N/A"}
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
