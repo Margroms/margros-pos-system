@@ -1,135 +1,100 @@
-from http.server import BaseHTTPRequestHandler
+from flask import Flask, request, jsonify
 import json
 import io
 import logging
 import base64
 from PIL import Image
 import pytesseract
+from flask_cors import CORS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        try:
-            # Handle CORS
-            self.send_response(200)
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            
-            # Get content length
-            content_length = int(self.headers.get('Content-Length', 0))
-            if content_length == 0:
-                self._send_error(400, "No content provided")
-                return
-            
-            # Read the request body
-            content_type = self.headers.get('Content-Type', '')
-            post_data = self.rfile.read(content_length)
-            
-            image_data = None
-            
-            # Handle different content types
-            if content_type.startswith('multipart/form-data'):
-                # Parse multipart data (simplified)
-                boundary = content_type.split('boundary=')[1].encode()
-                parts = post_data.split(b'--' + boundary)
-                
-                for part in parts:
-                    if b'Content-Disposition: form-data; name="file"' in part:
-                        # Extract image data
-                        lines = part.split(b'\r\n\r\n', 1)
-                        if len(lines) > 1:
-                            image_data = lines[1].rstrip(b'\r\n')
-                            break
-            
-            elif content_type == 'application/json':
-                # Handle JSON with base64 encoded image
-                try:
-                    json_data = json.loads(post_data.decode('utf-8'))
-                    if 'image' in json_data:
-                        image_data = base64.b64decode(json_data['image'])
-                except Exception as e:
-                    self._send_error(400, f"Invalid JSON: {str(e)}")
-                    return
-            
-            if not image_data:
-                self._send_error(400, "No image file found in request")
-                return
-            
-            logger.info(f"Processing image, size: {len(image_data)} bytes")
-            
-            # Process image with PIL
-            try:
-                image = Image.open(io.BytesIO(image_data))
-                logger.info(f"Image loaded: {image.format}, size: {image.size}, mode: {image.mode}")
-                
-                # Convert to RGB if necessary
-                if image.mode != 'RGB':
-                    image = image.convert('RGB')
-                
-                # OCR with Tesseract
-                logger.info("Starting OCR extraction...")
-                text = pytesseract.image_to_string(image, config='--psm 6')
-                
-                if not text or not text.strip():
-                    logger.warning("No text extracted from image")
-                    self._send_error(400, "No text found in image")
-                    return
-                
-                logger.info(f"OCR completed. Text length: {len(text)}")
-                logger.info(f"OCR preview: {text[:200]}...")
-                
-                # Send successful response
-                response = {
-                    "success": True,
-                    "text": text
-                }
-                
-                self.wfile.write(json.dumps(response).encode('utf-8'))
-                
-            except Exception as img_error:
-                logger.error(f"Error processing image: {str(img_error)}")
-                self._send_error(500, f"Image processing error: {str(img_error)}")
-                
-        except Exception as e:
-            logger.error(f"Error in OCR handler: {str(e)}", exc_info=True)
-            self._send_error(500, f"Internal server error: {str(e)}")
-    
-    def do_OPTIONS(self):
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Menu OCR Service is running with Flask"})
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy", "service": "Menu OCR Service"})
+
+@app.route('/ocr', methods=['POST', 'OPTIONS'])
+def ocr_image():
+    if request.method == 'OPTIONS':
         # Handle CORS preflight
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+        return '', 200
     
-    def do_GET(self):
-        # Health check endpoint
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
+    try:
+        logger.info("OCR endpoint hit")
         
-        response = {"message": "Menu OCR Service is running on Vercel"}
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-    
-    def _send_error(self, status_code, message):
-        """Helper method to send error responses"""
+        image_data = None
+        
+        # Handle multipart form data (file upload)
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename:
+                logger.info(f"Processing uploaded file: {file.filename}")
+                image_data = file.read()
+        
+        # Handle JSON with base64 encoded image
+        elif request.is_json:
+            json_data = request.get_json()
+            if 'image' in json_data:
+                try:
+                    image_data = base64.b64decode(json_data['image'])
+                    logger.info("Processing base64 encoded image from JSON")
+                except Exception as e:
+                    return jsonify({"success": False, "error": f"Invalid base64 image: {str(e)}"}), 400
+        
+        # Handle raw image data
+        elif request.content_type and request.content_type.startswith('image/'):
+            image_data = request.get_data()
+            logger.info("Processing raw image data")
+        
+        if not image_data:
+            return jsonify({"success": False, "error": "No image file found in request"}), 400
+        
+        logger.info(f"Processing image, size: {len(image_data)} bytes")
+        
+        # Process image with PIL
         try:
-            self.send_response(status_code)
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
+            image = Image.open(io.BytesIO(image_data))
+            logger.info(f"Image loaded: {image.format}, size: {image.size}, mode: {image.mode}")
             
-            error_response = {
-                "success": False,
-                "error": message
+            # Convert to RGB if necessary
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # OCR with Tesseract
+            logger.info("Starting OCR extraction...")
+            text = pytesseract.image_to_string(image, config='--psm 6')
+            
+            if not text or not text.strip():
+                logger.warning("No text extracted from image")
+                return jsonify({"success": False, "error": "No text found in image"}), 400
+            
+            logger.info(f"OCR completed. Text length: {len(text)}")
+            logger.info(f"OCR preview: {text[:200]}...")
+            
+            # Send successful response
+            response = {
+                "success": True,
+                "text": text
             }
-            self.wfile.write(json.dumps(error_response).encode('utf-8'))
-        except Exception as e:
-            logger.error(f"Error sending error response: {e}")
+            
+            return jsonify(response)
+            
+        except Exception as img_error:
+            logger.error(f"Error processing image: {str(img_error)}")
+            return jsonify({"success": False, "error": f"Image processing error: {str(img_error)}"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error in OCR handler: {str(e)}", exc_info=True)
+        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=8000)

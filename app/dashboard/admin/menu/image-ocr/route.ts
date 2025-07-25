@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     ocrFormData.append('file', imageFile);
 
     console.log('Sending image to OCR service...');
-    const ocrResponse = await fetch(`${OCR_SERVICE_URL}/api/ocr`, {
+    const ocrResponse = await fetch(`${OCR_SERVICE_URL}/ocr`, {
       method: 'POST',
       body: ocrFormData,
     });
