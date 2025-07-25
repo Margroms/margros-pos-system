@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Save, X, ChefHat, Tag } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import CameraRecognition from "./image-ocr/camerarecog";
 
 export default function MenuPage() {
   const [activeTab, setActiveTab] = useState("items");
@@ -103,6 +104,9 @@ export default function MenuPage() {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteAll, setDeleteAll] = useState(false);
+
+  // Camera Recognition states
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -708,6 +712,18 @@ export default function MenuPage() {
     setDeleteAll(false);
   };
 
+  // Camera recognition handlers
+  const handleCameraSuccess = () => {
+    console.log('Camera recognition completed successfully');
+    loadData(); // Reload menu data after successful upload
+    setShowCameraModal(false);
+  };
+
+  const handleCameraClose = () => {
+    console.log('Camera modal closed');
+    setShowCameraModal(false);
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -773,6 +789,13 @@ export default function MenuPage() {
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Upload CSV</span>
+              </button>
+              <button
+                onClick={() => setShowCameraModal(true)}
+                className="bg-blue-500 text-white hover:bg-blue-600 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base"
+              >
+                <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Scan Menu</span>
               </button>
               <button
                 onClick={() => openItemModal()}
@@ -1423,6 +1446,13 @@ export default function MenuPage() {
           </div>
         </div>
       )}
+
+      {/* Camera Recognition Modal */}
+      <CameraRecognition
+        isOpen={showCameraModal}
+        onClose={handleCameraClose}
+        onSuccess={handleCameraSuccess}
+      />
     </div>
   );
 }
