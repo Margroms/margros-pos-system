@@ -609,10 +609,10 @@ export default function InventoryDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Inventory Value</CardTitle>
-              <div className="h-4 w-4 text-muted-foreground">$</div>
+              <div className="h-4 w-4 text-muted-foreground">₹</div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${inventoryValue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">₹{inventoryValue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground flex items-center">
                 <span className="text-green-500 flex items-center mr-1">
                   <ArrowUp className="h-3 w-3 mr-1" /> 5.2%
@@ -718,7 +718,7 @@ export default function InventoryDashboard() {
                                       <td className="p-2">{row.quantity}</td>
                                       <td className="p-2">{row.unit}</td>
                                       <td className="p-2">{row.restock_threshold}</td>
-                                      <td className="p-2">${row.price}</td>
+                                      <td className="p-2">₹{row.price}</td>
                                       <td className="p-2">{row.expiry_date || 'N/A'}</td>
                                     </tr>
                                   ))}
@@ -913,7 +913,7 @@ export default function InventoryDashboard() {
                             Price
                           </Label>
                           <div className="col-span-1 sm:col-span-3 flex items-center">
-                            <span className="mr-2 text-muted-foreground">$</span>
+                            <span className="mr-2 text-muted-foreground">₹</span>
                             <Input
                               id="price"
                               type="number"
