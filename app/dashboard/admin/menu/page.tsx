@@ -99,6 +99,11 @@ export default function MenuPage() {
   const [selectedInventoryCategory, setSelectedInventoryCategory] =
     useState<string>("");
 
+  // Add state for multi-delete functionality
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteAll, setDeleteAll] = useState(false);
+
   // Load initial data
   useEffect(() => {
     loadData();
@@ -643,6 +648,66 @@ export default function MenuPage() {
     }
   }
 
+  // Function to toggle item selection
+  const toggleItemSelection = (id: number) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  // Function to handle delete action
+  const handleDeleteSelected = async () => {
+    try {
+      // Add detailed logging to debug Supabase delete query
+      console.log("Delete All:", deleteAll);
+      console.log("Selected Items:", selectedItems);
+
+      if (deleteAll) {
+        console.log("Attempting to delete all items from menu_items table");
+        const { error } = await supabase.from("menu_items").delete();
+        if (error) {
+          console.error("Supabase error while deleting all items:", error);
+          throw error;
+        }
+        setMenuItems([]);
+        setMenuItemIngredients([]);
+      } else {
+        console.log("Attempting to delete selected items:", selectedItems);
+        const { error } = await supabase
+          .from("menu_items")
+          .delete()
+          .in("id", selectedItems);
+        if (error) {
+          console.error("Supabase error while deleting selected items:", error);
+          throw error;
+        }
+        setMenuItems((prev) => prev.filter((item) => !selectedItems.includes(item.id)));
+        setMenuItemIngredients((prev) =>
+          prev.filter((ingredient) => !selectedItems.includes(ingredient.menu_item_id))
+        );
+      }
+      setSelectedItems([]);
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error("Error deleting items:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      }
+    }
+  };
+
+  // Function to open delete modal
+  const openDeleteModal = (all: boolean = false) => {
+    setDeleteAll(all);
+    setShowDeleteModal(true);
+  };
+
+  // Function to close delete modal
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteAll(false);
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -699,23 +764,49 @@ export default function MenuPage() {
       {/* Menu Items Tab */}
       {activeTab === "items" && (
         <div>
+          {/* Updated UI for Menu Items Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Menu Items</h2>
-            <div className="flex gap-2">
-              {/* CSV Upload Button */}
+            <h2 className="text-2xl font-bold text-primary">Menu Items</h2>
+            <div className="flex gap-4">
+              {/* Upload CSV Button */}
               <button
                 onClick={() => setCsvUploadOpen(true)}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-4 py-2 rounded-lg flex items-center space-x-2"
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 <span>Upload CSV</span>
               </button>
+
+              {/* Add Item Button */}
               <button
                 onClick={() => openItemModal()}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg flex items-center space-x-2"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 <span>Add Item</span>
+              </button>
+
+              {/* Delete All Button */}
+              <button
+                onClick={() => openDeleteModal(true)}
+                className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete All</span>
+              </button>
+
+              {/* Delete Selected Button */}
+              <button
+                onClick={() => openDeleteModal()}
+                disabled={selectedItems.length === 0}
+                className={`${
+                  selectedItems.length === 0
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-500 text-white hover:bg-red-600"
+                } px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md`}
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete Selected</span>
               </button>
             </div>
           </div>
@@ -723,51 +814,56 @@ export default function MenuPage() {
           {/* Basic menu items display */}
           <div className="grid gap-4">
             {/* Menu Items Table (Desktop) */}
-            <div className="border rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y">
-                <thead className="bg-muted">
+            <div className="border rounded-lg overflow-hidden shadow-md">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Sr. No
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Select
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Item Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Item Category
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Item Price
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Availability
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-background divide-y">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {filteredMenuItems.map((item, index) => (
-                    <tr key={item.id} className="hover:bg-muted">
+                    <tr key={item.id} className="hover:bg-gray-100">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {index + 1}
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleItemSelection(item.id)}
+                          className="form-checkbox h-5 w-5 text-primary focus:ring-primary focus:ring-2"
+                        />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {item.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {getCategoryName(item.category_id)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         ₹{item.price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             item.is_available
-                              ? "border-green-500 text-green-500"
-                              : "border-red-500 text-red-500"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
                           {item.is_available ? "Available" : "Unavailable"}
@@ -776,15 +872,15 @@ export default function MenuPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => openItemModal(item)}
-                          className="text-muted-foreground hover:text-foreground mr-3"
+                          className="text-indigo-600 hover:text-indigo-900 mr-3"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDeleteItem(item.id)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-red-600 hover:text-red-900"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </td>
                     </tr>
@@ -1208,6 +1304,35 @@ export default function MenuPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background text-foreground p-6 rounded-lg shadow-lg w-full max-w-md border">
+            <h2 className="text-xl font-bold mb-4">
+              {deleteAll ? "Delete All Items" : "Delete Selected Items"}
+            </h2>
+            <p className="mb-4">
+              Are you sure you want to delete {deleteAll ? "all items" : "the selected items"}?
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={closeDeleteModal}
+                className="bg-gray-300 text-gray-700 hover:bg-gray-400 px-4 py-2 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSelected}
+                className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-lg"
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}
