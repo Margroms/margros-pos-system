@@ -6,7 +6,7 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY!,
 });
 
-const OCR_SERVICE_URL = process.env.OCR_SERVICE_URL || 'http://localhost:8000';
+const OCR_SERVICE_URL = process.env.OCR_SERVICE_URL;
 
 // Types for database operations
 interface MenuCategory {
@@ -42,16 +42,31 @@ export async function POST(request: NextRequest) {
     ocrFormData.append('file', imageFile);
 
     console.log('Sending image to OCR service...');
+    console.log('OCR Service URL:', OCR_SERVICE_URL);
     const ocrResponse = await fetch(`${OCR_SERVICE_URL}/ocr`, {
       method: 'POST',
       body: ocrFormData,
     });
 
+    console.log('OCR Response status:', ocrResponse.status);
+    console.log('OCR Response headers:', Object.fromEntries(ocrResponse.headers.entries()));
+
     if (!ocrResponse.ok) {
-      const errorData = await ocrResponse.json();
+      let errorData;
+      try {
+        errorData = await ocrResponse.json();
+      } catch (e) {
+        // If response is not JSON, get text content
+        const errorText = await ocrResponse.text();
+        console.error('OCR service non-JSON error:', errorText);
+        return NextResponse.json(
+          { error: 'OCR processing failed', details: `HTTP ${ocrResponse.status}: ${errorText}` },
+          { status: ocrResponse.status }
+        );
+      }
       console.error('OCR service error:', errorData);
       return NextResponse.json(
-        { error: 'OCR processing failed', details: errorData.error },
+        { error: 'OCR processing failed', details: errorData.error || 'Unknown OCR error' },
         { status: ocrResponse.status }
       );
     }
