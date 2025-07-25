@@ -18,6 +18,7 @@ interface MenuItem {
   name: string;
   price: number;
   category: string;
+  category_id?: number; // Add category_id from backend
   description: string;
   is_available: boolean;
 }
@@ -33,6 +34,13 @@ interface OCRResult {
   originalText: string;
   cleanedText: string;
   structuredData: StructuredData;
+  categoryMapping?: { [name: string]: number }; // Add category mapping from backend
+  updatedCategories?: MenuCategory[]; // Add updated categories from backend
+  stats?: {
+    categoriesCreated: number;
+    itemsExtracted: number;
+    confidence: string;
+  };
 }
 
 interface CameraRecognitionProps {
@@ -161,42 +169,14 @@ export default function CameraRecognition({ isOpen, onClose, onSuccess }: Camera
 
     setIsUploading(true);
     try {
-      const { categories, menu_items } = ocrResult.structuredData;
+      const { menu_items } = ocrResult.structuredData;
 
-      // First, upload categories
-      const categoryMap = new Map<string, number>();
-      
-      for (const category of categories) {
-        const { data: existingCategory } = await supabase
-          .from('menu_categories')
-          .select('id')
-          .eq('name', category.name)
-          .single();
-
-        if (existingCategory) {
-          categoryMap.set(category.name, existingCategory.id);
-        } else {
-          const { data: newCategory, error } = await supabase
-            .from('menu_categories')
-            .insert({
-              name: category.name,
-              display_order: category.display_order
-            })
-            .select('id')
-            .single();
-
-          if (error) throw error;
-          if (newCategory) {
-            categoryMap.set(category.name, newCategory.id);
-          }
-        }
-      }
-
-      // Then upload menu items
+      // Since categories are already created in the backend and menu_items 
+      // already have category_id, we can directly insert menu items
       const menuItemsToInsert = menu_items.map(item => ({
         name: item.name,
         price: item.price,
-        category_id: categoryMap.get(item.category) || null,
+        category_id: item.category_id || null, // Use category_id from backend
         description: item.description,
         is_available: item.is_available,
       }));
@@ -207,9 +187,13 @@ export default function CameraRecognition({ isOpen, onClose, onSuccess }: Camera
 
       if (menuError) throw menuError;
 
+      const statsMessage = ocrResult.stats 
+        ? `Successfully uploaded ${ocrResult.stats.itemsExtracted} menu items. ${ocrResult.stats.categoriesCreated} new categories were created.`
+        : `Successfully uploaded ${menu_items.length} menu items to the database.`;
+
       toast({
-        title: "Upload Successful",
-        description: `Successfully uploaded ${menu_items.length} menu items to the database.`,
+        title: "Upload Successful", 
+        description: statsMessage,
       });
 
       onSuccess();
