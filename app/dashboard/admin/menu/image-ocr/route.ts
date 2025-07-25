@@ -37,15 +37,22 @@ export async function POST(request: NextRequest) {
     console.log('Image file size:', imageFile.size, 'bytes');
     console.log('Image file type:', imageFile.type);
 
-    // Step 1: Send image to Python OCR service
-    const ocrFormData = new FormData();
-    ocrFormData.append('file', imageFile);
+    // Step 1: Convert image to base64 and send to OCR service
+    const imageBuffer = await imageFile.arrayBuffer();
+    const imageBase64 = Buffer.from(imageBuffer).toString('base64');
 
     console.log('Sending image to OCR service...');
     console.log('OCR Service URL:', OCR_SERVICE_URL);
+    console.log('Image base64 length:', imageBase64.length);
+
     const ocrResponse = await fetch(`${OCR_SERVICE_URL}/ocr`, {
       method: 'POST',
-      body: ocrFormData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        image: imageBase64
+      }),
     });
 
     console.log('OCR Response status:', ocrResponse.status);
