@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase, type InventoryItem, type InventoryCategory } from "@/lib/supabase"
-import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical } from "lucide-react"
+import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical, Trash2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -54,6 +54,11 @@ export default function InventoryDashboard() {
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvPreview, setCsvPreview] = useState<any[]>([])
   const [csvUploading, setCsvUploading] = useState(false)
+  const [selectedItems, setSelectedItems] = useState<number[]>([])
+  const [addItemDialogOpen, setAddItemDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteAll, setDeleteAll] = useState(false);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -140,6 +145,8 @@ export default function InventoryDashboard() {
         last_restocked: undefined,
       })
 
+      setAddItemDialogOpen(false);
+
       toast({
         title: "Item Added",
         description: `${newItem.name} has been added to inventory`,
@@ -155,6 +162,45 @@ export default function InventoryDashboard() {
       })
     }
   }
+
+  // Update item
+  const updateItem = async () => {
+    if (!editingItem) return;
+
+    if (!newItem.name || newItem.quantity < 0 || newItem.restock_threshold < 0 || newItem.price < 0) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields with valid values",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("inventory_items")
+        .update(newItem)
+        .eq("id", editingItem.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Item Updated",
+        description: `${newItem.name} has been updated.`,
+      });
+
+      setAddItemDialogOpen(false);
+      setEditingItem(null);
+      fetchInventory();
+    } catch (error) {
+      console.error("Error updating item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update item",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Add new category
   const addNewCategory = async () => {
@@ -363,6 +409,66 @@ export default function InventoryDashboard() {
       })
     }
   }
+
+  // Delete selected items
+  const handleDelete = async () => {
+    try {
+      let itemsToDelete = deleteAll ? inventory.map((item) => item.id) : selectedItems;
+      if (itemsToDelete.length === 0) return;
+
+      const { error } = await supabase.from("inventory_items").delete().in("id", itemsToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Items Deleted",
+        description: `${deleteAll ? "All" : "Selected"} items have been removed from inventory`,
+      });
+
+      setSelectedItems([]);
+      fetchInventory();
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting items:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete items",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openDeleteModal = (all: boolean) => {
+    setDeleteAll(all);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteAll(false);
+  };
+
+  const toggleItemSelection = (id: number) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  // Open edit item dialog
+  const openEditItemDialog = (item: InventoryItem) => {
+    setEditingItem(item);
+    setNewItem({
+      name: item.name,
+      category_id: item.category_id,
+      quantity: item.quantity,
+      unit: item.unit,
+      restock_threshold: item.restock_threshold,
+      price: item.price,
+      expiry_date: item.expiry_date,
+      last_restocked: item.last_restocked,
+    });
+    setAddItemDialogOpen(true);
+  };
 
   // Update item quantity
   const updateItemQuantity = async (id: number, quantity: number) => {
@@ -690,16 +796,35 @@ export default function InventoryDashboard() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                  <Dialog>
+                  <Dialog open={addItemDialogOpen} onOpenChange={setAddItemDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="w-full sm:w-auto flex-shrink-0">
+                      <Button
+                        className="w-full sm:w-auto flex-shrink-0"
+                        onClick={() => {
+                          setEditingItem(null);
+                          setNewItem({
+                            name: "",
+                            category_id: categories[0]?.id || 1,
+                            quantity: 0,
+                            unit: "kg",
+                            restock_threshold: 0,
+                            price: 0,
+                            expiry_date: undefined,
+                            last_restocked: undefined,
+                          });
+                        }}
+                      >
                         <Plus className="mr-2 h-4 w-4" /> Add Item
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-lg">
                       <DialogHeader>
-                        <DialogTitle>Add New Inventory Item</DialogTitle>
-                        <DialogDescription>Fill in the details to add a new item to inventory.</DialogDescription>
+                        <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
+                        <DialogDescription>
+                          {editingItem
+                            ? "Update the details of the inventory item."
+                            : "Fill in the details to add a new item to inventory."}
+                        </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
@@ -801,7 +926,9 @@ export default function InventoryDashboard() {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button onClick={addNewItem} className="w-full sm:w-auto">Add Item</Button>
+                        <Button onClick={editingItem ? updateItem : addNewItem} className="w-full sm:w-auto">
+                          {editingItem ? "Update Item" : "Add Item"}
+                        </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -810,6 +937,22 @@ export default function InventoryDashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="flex gap-4 mb-4">
+              <Button
+                onClick={() => openDeleteModal(true)}
+                variant="destructive"
+                disabled={inventory.length === 0}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete All
+              </Button>
+              <Button
+                onClick={() => openDeleteModal(false)}
+                variant="destructive"
+                disabled={selectedItems.length === 0}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete Selected ({selectedItems.length})
+              </Button>
+            </div>
             <Tabs defaultValue="all">
               <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
                 <TabsTrigger value="all">All Items</TabsTrigger>
@@ -818,23 +961,78 @@ export default function InventoryDashboard() {
               </TabsList>
 
               <TabsContent value="all">
-                <InventoryList items={filteredInventory} onUpdate={fetchInventory} />
+                <InventoryList
+                  items={filteredInventory}
+                  onUpdate={fetchInventory}
+                  onEdit={openEditItemDialog}
+                  selectedItems={selectedItems}
+                  onSelectItem={toggleItemSelection}
+                  onDeleteItem={deleteItem}
+                />
               </TabsContent>
               <TabsContent value="low">
-                <InventoryList items={lowStockItems} onUpdate={fetchInventory} />
+                <InventoryList
+                  items={lowStockItems}
+                  onUpdate={fetchInventory}
+                  onEdit={openEditItemDialog}
+                  selectedItems={selectedItems}
+                  onSelectItem={toggleItemSelection}
+                  onDeleteItem={deleteItem}
+                />
               </TabsContent>
               <TabsContent value="expiring">
-                <InventoryList items={expiringItems} onUpdate={fetchInventory} />
+                <InventoryList
+                  items={expiringItems}
+                  onUpdate={fetchInventory}
+                  onEdit={openEditItemDialog}
+                  selectedItems={selectedItems}
+                  onSelectItem={toggleItemSelection}
+                  onDeleteItem={deleteItem}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </div>
+      {showDeleteModal && (
+        <Dialog open={showDeleteModal} onOpenChange={closeDeleteModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you sure?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete the selected inventory items.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={closeDeleteModal}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
 
-const InventoryList = ({ items, onUpdate }: { items: InventoryItem[]; onUpdate: () => void }) => {
+const InventoryList = ({
+  items,
+  onUpdate,
+  onEdit,
+  selectedItems,
+  onSelectItem,
+  onDeleteItem,
+}: {
+  items: InventoryItem[];
+  onUpdate: () => void;
+  onEdit: (item: InventoryItem) => void;
+  selectedItems: number[];
+  onSelectItem: (id: number) => void;
+  onDeleteItem: (id: number) => void;
+}) => {
   const { toast } = useToast()
 
   const deleteItem = async (id: number) => {
@@ -923,6 +1121,27 @@ const InventoryList = ({ items, onUpdate }: { items: InventoryItem[]; onUpdate: 
         <table className="w-full">
           <thead>
             <tr className="border-b">
+              <th className="text-left p-3">
+                <input
+                  type="checkbox"
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      items.forEach((item) => {
+                        if (!selectedItems.includes(item.id)) {
+                          onSelectItem(item.id);
+                        }
+                      });
+                    } else {
+                      items.forEach((item) => {
+                        if (selectedItems.includes(item.id)) {
+                          onSelectItem(item.id);
+                        }
+                      });
+                    }
+                  }}
+                  checked={items.length > 0 && items.every((item) => selectedItems.includes(item.id))}
+                />
+              </th>
               <th className="text-left p-3">Name</th>
               <th className="text-left p-3">Category</th>
               <th className="text-left p-3">Quantity</th>
@@ -934,48 +1153,17 @@ const InventoryList = ({ items, onUpdate }: { items: InventoryItem[]; onUpdate: 
           <tbody>
             {items.map((item) => (
               <tr key={item.id} className="border-b">
-                <td className="p-3 font-medium">{item.name}</td>
+                <td className="p-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(item.id)}
+                    onChange={() => onSelectItem(item.id)}
+                  />
+                </td>
+                <td className="p-3">{item.name}</td>
                 <td className="p-3">{item.inventory_categories?.name || "Uncategorized"}</td>
-                <td className="p-3">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-6 w-6 rounded-full"
-                      onClick={() => updateItemQuantity(item.id, Number(item.quantity) - 1)}
-                    >
-                      -
-                    </Button>
-                    <span>{`${item.quantity} ${item.unit}`}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-6 w-6 rounded-full"
-                      onClick={() => updateItemQuantity(item.id, Number(item.quantity) + 1)}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </td>
-                <td className="p-3">
-                  <div className="flex items-center gap-2">
-                    <Progress
-                      value={(Number(item.quantity) / (Number(item.restock_threshold) * 1.5)) * 100}
-                      className="w-20"
-                    />
-                    <Badge
-                      variant={
-                        getStockStatus(item) === "critical"
-                          ? "destructive"
-                          : getStockStatus(item) === "low"
-                          ? "secondary"
-                          : "default"
-                      }
-                    >
-                      {getStockStatus(item)}
-                    </Badge>
-                  </div>
-                </td>
+                <td className="p-3">{item.quantity} {item.unit}</td>
+                <td className="p-3">{getStockStatus(item)}</td>
                 <td className="p-3 hidden lg:table-cell">
                   <Badge
                     variant={
@@ -990,11 +1178,11 @@ const InventoryList = ({ items, onUpdate }: { items: InventoryItem[]; onUpdate: 
                   </Badge>
                 </td>
                 <td className="p-3 text-right">
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)}>
-                    <Trash className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" onClick={() => onDeleteItem(item.id)}>
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </td>
               </tr>
@@ -1006,85 +1194,29 @@ const InventoryList = ({ items, onUpdate }: { items: InventoryItem[]; onUpdate: 
       {/* Mobile Card View */}
       <div className="grid grid-cols-1 gap-4 md:hidden">
         {items.map((item) => (
-          <Card key={item.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{item.name}</CardTitle>
-                  <CardDescription>{item.inventory_categories?.name || "Uncategorized"}</CardDescription>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => deleteItem(item.id)} className="text-red-500">
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          <div key={item.id} className="border rounded-md p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold">{item.name}</h3>
+              <div>
+                <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => onDeleteItem(item.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Quantity</span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => updateItemQuantity(item.id, Number(item.quantity) - 1)}
-                  >
-                    -
-                  </Button>
-                  <span className="font-medium">{`${item.quantity} ${item.unit}`}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => updateItemQuantity(item.id, Number(item.quantity) + 1)}
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Stock Level</span>
-                <Badge
-                  variant={
-                    getStockStatus(item) === "critical"
-                      ? "destructive"
-                      : getStockStatus(item) === "low"
-                      ? "secondary"
-                      : "default"
-                  }
-                >
-                  {getStockStatus(item)}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Expiry</span>
-                <Badge
-                  variant={
-                    getExpiryStatus(item.expiry_date) === "expired"
-                      ? "destructive"
-                      : getExpiryStatus(item.expiry_date) === "soon"
-                      ? "secondary"
-                      : "default"
-                  }
-                >
-                  {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : "N/A"}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p>{item.inventory_categories?.name || "Uncategorized"}</p>
+            <p>{item.quantity} {item.unit}</p>
+            <p>Stock: {getStockStatus(item)}</p>
+            <p>Expires: {getExpiryStatus(item.expiry_date)}</p>
+            <input
+              type="checkbox"
+              checked={selectedItems.includes(item.id)}
+              onChange={() => onSelectItem(item.id)}
+              className="mt-2"
+            />
+          </div>
         ))}
       </div>
     </div>

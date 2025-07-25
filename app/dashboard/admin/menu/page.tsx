@@ -764,11 +764,9 @@ export default function MenuPage() {
       {/* Menu Items Tab */}
       {activeTab === "items" && (
         <div>
-          {/* Updated UI for Menu Items Header */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-primary">Menu Items</h2>
             <div className="flex gap-4">
-              {/* Upload CSV Button */}
               <button
                 onClick={() => setCsvUploadOpen(true)}
                 className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
@@ -776,8 +774,6 @@ export default function MenuPage() {
                 <Plus className="w-5 h-5" />
                 <span>Upload CSV</span>
               </button>
-
-              {/* Add Item Button */}
               <button
                 onClick={() => openItemModal()}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
@@ -785,109 +781,118 @@ export default function MenuPage() {
                 <Plus className="w-5 h-5" />
                 <span>Add Item</span>
               </button>
-
-              {/* Delete All Button */}
-              <button
-                onClick={() => openDeleteModal(true)}
-                className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
-              >
-                <Trash2 className="w-5 h-5" />
-                <span>Delete All</span>
-              </button>
-
-              {/* Delete Selected Button */}
-              <button
-                onClick={() => openDeleteModal()}
-                disabled={selectedItems.length === 0}
-                className={`${
-                  selectedItems.length === 0
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-red-500 text-white hover:bg-red-600"
-                } px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md`}
-              >
-                <Trash2 className="w-5 h-5" />
-                <span>Delete Selected</span>
-              </button>
             </div>
           </div>
 
-          {/* Basic menu items display */}
-          <div className="grid gap-4">
-            {/* Menu Items Table (Desktop) */}
-            <div className="border rounded-lg overflow-hidden shadow-md">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Select
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Item Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Availability
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+          <div className="flex gap-4 mb-4 items-right">
+            <button
+              onClick={() => openDeleteModal(true)}
+              className="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>Delete All</span>
+            </button>
+            <button
+              onClick={() => openDeleteModal(false)}
+              disabled={selectedItems.length === 0}
+              className={`${
+                selectedItems.length === 0
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-red-500 text-white hover:bg-red-600"
+              } px-4 py-2 rounded-lg flex items-center space-x-2 shadow-md`}
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>Delete Selected ({selectedItems.length})</span>
+            </button>
+          </div>
+
+          {/* Menu Items Table */}
+          <div className="border rounded-lg overflow-hidden shadow-md">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedItems(filteredMenuItems.map((item) => item.id));
+                        } else {
+                          setSelectedItems([]);
+                        }
+                      }}
+                      checked={
+                        filteredMenuItems.length > 0 &&
+                        selectedItems.length === filteredMenuItems.length
+                      }
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Item Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Availability
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredMenuItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-100">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(item.id)}
+                        onChange={() => toggleItemSelection(item.id)}
+                        className="form-checkbox h-5 w-5 text-primary focus:ring-primary focus:ring-2"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {item.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getCategoryName(item.category_id)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ₹{item.price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          item.is_available
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {item.is_available ? "Available" : "Unavailable"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => openItemModal(item)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredMenuItems.map((item, index) => (
-                    <tr key={item.id} className="hover:bg-gray-100">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(item.id)}
-                          onChange={() => toggleItemSelection(item.id)}
-                          className="form-checkbox h-5 w-5 text-primary focus:ring-primary focus:ring-2"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getCategoryName(item.category_id)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ₹{item.price.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            item.is_available
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {item.is_available ? "Available" : "Unavailable"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => openItemModal(item)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-3"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
