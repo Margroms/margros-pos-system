@@ -4,6 +4,8 @@ import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera } from "lucide-react"
 import { supabase } from "@/lib/supabase";
 import CameraRecognition from "./image-ocr/camerarecog";
 
+import { getMenuSuggestions } from "@/models/MenuAgent";
+
 export default function MenuPage() {
   const [activeTab, setActiveTab] = useState("items");
   interface MenuItem {
@@ -107,6 +109,8 @@ export default function MenuPage() {
 
   // Camera Recognition states
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string | null>(null);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -724,6 +728,15 @@ export default function MenuPage() {
     setShowCameraModal(false);
   };
 
+  const handleGetAiSuggestions = async () => {
+    const suggestions = await getMenuSuggestions(
+      "Current menu:\n" +
+        menuItems.map((item) => item.name).join("\n")
+    );
+    setAiSuggestions(suggestions || "No suggestions available.");
+    setShowAiSuggestions(true);
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -803,6 +816,13 @@ export default function MenuPage() {
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Add Item</span>
+              </button>
+              <button
+                onClick={handleGetAiSuggestions}
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base"
+              >
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Get AI Suggestions</span>
               </button>
             </div>
           </div>
@@ -1453,6 +1473,24 @@ export default function MenuPage() {
         onClose={handleCameraClose}
         onSuccess={handleCameraSuccess}
       />
+      {showAiSuggestions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background text-foreground p-6 rounded-lg shadow-lg w-full max-w-2xl border max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">AI Menu Suggestions</h2>
+              <button
+                onClick={() => setShowAiSuggestions(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="prose">
+              <p>{aiSuggestions}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

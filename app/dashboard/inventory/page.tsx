@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { getInventorySuggestions } from "@/models/InventoryAgent"
 
 export default function InventoryDashboard() {
   const { toast } = useToast()
@@ -59,6 +60,8 @@ export default function InventoryDashboard() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteAll, setDeleteAll] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string | null>(null)
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false)
 
   // Fetch data on component mount
   useEffect(() => {
@@ -448,6 +451,16 @@ export default function InventoryDashboard() {
     setDeleteAll(false);
   };
 
+  const handleGetAiSuggestions = async () => {
+    const suggestions = await getInventorySuggestions(
+      "Current inventory:\n" +
+        inventory.map((item) => `${item.name}: ${item.quantity}`).join("\n")
+    );
+    setAiSuggestions(suggestions || "No suggestions available.");
+    setShowAiSuggestions(true);
+  };
+
+
   const toggleItemSelection = (id: number) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
@@ -756,6 +769,13 @@ export default function InventoryDashboard() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm"
+                    onClick={handleGetAiSuggestions}
+                  >
+                    <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Get AI Suggestions
+                  </Button>
                   <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm">
@@ -1013,6 +1033,26 @@ export default function InventoryDashboard() {
               </Button>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      {showAiSuggestions && (
+        <Dialog open={showAiSuggestions} onOpenChange={setShowAiSuggestions}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>AI Inventory Suggestions</DialogTitle>
+              <DialogDescription>
+                Here are some suggestions from our AI agent to help you manage your inventory.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="prose">
+              <p>{aiSuggestions}</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAiSuggestions(false)}>
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>

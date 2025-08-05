@@ -22,6 +22,8 @@ import { supabase, type Table, type OrderItem, type MenuItem } from "@/lib/supab
 import { CreditCard, Download, Printer, Receipt, Wallet, AlertTriangle } from "lucide-react"
 import { useState, useEffect } from "react"
 
+import { getBillingInsights, getQuickInsights } from "@/models/BillingAgent";
+
 // Define types matching database constraints
 type Order = {
   id: number
@@ -88,6 +90,9 @@ export default function BillingDashboard() {
   const [transactionId, setTransactionId] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [inventoryWarnings, setInventoryWarnings] = useState<string[]>([])
+  const [aiInsights, setAiInsights] = useState<string | null>(null);
+  const [showAiInsights, setShowAiInsights] = useState(false);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -513,6 +518,130 @@ export default function BillingDashboard() {
     })
   }
 
+  const handleGetAiInsights = async () => {
+    setLoadingInsights(true);
+    try {
+      // Fetch comprehensive data for analysis
+      const now = new Date();
+      const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      // Get all payments from last 7 days for comprehensive analysis
+      const { data: recentPayments, error: paymentsError } = await supabase
+        .from("payments")
+        .select(`
+          *,
+          orders (
+            *,
+            tables (*),
+            order_items (
+              *,
+              menu_items (*)
+            )
+          )
+        `)
+        .eq("status", "completed")
+        .gte("created_at", last7Days.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (paymentsError) throw paymentsError;
+
+      // Get menu items with sales data
+      const { data: allOrderItems, error: orderItemsError } = await supabase
+        .from("order_items")
+        .select(`
+          *,
+          menu_items (*),
+          orders!inner (
+            status,
+            created_at,
+            payments!inner (
+              status,
+              created_at
+            )
+          )
+        `)
+        .gte("orders.created_at", last7Days.toISOString())
+        .eq("orders.payments.status", "completed");
+
+      if (orderItemsError) throw orderItemsError;
+
+      // Calculate metrics
+      const totalRevenue = recentPayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+      const totalOrders = recentPayments?.length || 0;
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      // Payment method breakdown
+      const paymentMethodBreakdown = recentPayments?.reduce((acc, payment) => {
+        acc[payment.payment_method] = (acc[payment.payment_method] || 0) + payment.amount;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      // Top selling items
+      const itemSales = allOrderItems?.reduce((acc, item) => {
+        const itemName = item.menu_items?.name || 'Unknown Item';
+        if (!acc[itemName]) {
+          acc[itemName] = { quantity: 0, revenue: 0 };
+        }
+        acc[itemName].quantity += item.quantity;
+        acc[itemName].revenue += item.price * item.quantity;
+        return acc;
+      }, {} as Record<string, {quantity: number, revenue: number}>) || {};
+
+      const topSellingItems = Object.entries(itemSales)
+        .map(([name, data]) => ({ 
+          name, 
+          quantity: (data as {quantity: number, revenue: number}).quantity, 
+          revenue: (data as {quantity: number, revenue: number}).revenue 
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      // Hourly trends
+      const hourlyData = recentPayments?.reduce((acc, payment) => {
+        const hour = new Date(payment.created_at).getHours();
+        if (!acc[hour]) {
+          acc[hour] = { orders: 0, revenue: 0 };
+        }
+        acc[hour].orders += 1;
+        acc[hour].revenue += payment.amount;
+        return acc;
+      }, {} as Record<number, {orders: number, revenue: number}>) || {};
+
+      const hourlyTrends = Object.entries(hourlyData)
+        .map(([hour, data]) => ({ 
+          hour: parseInt(hour), 
+          orders: (data as {orders: number, revenue: number}).orders, 
+          revenue: (data as {orders: number, revenue: number}).revenue 
+        }))
+        .sort((a, b) => a.hour - b.hour);
+
+      const comprehensiveData = {
+        completedPayments: recentPayments || [],
+        orderItems: allOrderItems || [],
+        tableBills,
+        timeRange: "Last 7 days",
+        totalRevenue,
+        totalOrders,
+        averageOrderValue,
+        paymentMethodBreakdown,
+        topSellingItems,
+        hourlyTrends
+      };
+
+      const insights = await getBillingInsights(comprehensiveData);
+      setAiInsights(insights || "No insights available.");
+      setShowAiInsights(true);
+    } catch (error) {
+      console.error('Error fetching AI insights:', error);
+      // Fallback to quick insights with available data
+      const quickInsights = await getQuickInsights(completedPayments);
+      setAiInsights(quickInsights || "Unable to generate insights at this time.");
+      setShowAiInsights(true);
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-6">
@@ -533,6 +662,16 @@ export default function BillingDashboard() {
           <h1 className="text-3xl font-bold">Billing Dashboard</h1>
           <p className="text-muted-foreground">Process table payments and manage bills</p>
         </div>
+        <Button onClick={handleGetAiInsights} disabled={loadingInsights} className="mb-4">
+          {loadingInsights ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Analyzing Data...
+            </>
+          ) : (
+            'Get AI Insights'
+          )}
+        </Button>
 
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -917,6 +1056,97 @@ export default function BillingDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      {showAiInsights && (
+        <Dialog open={showAiInsights} onOpenChange={setShowAiInsights}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                🤖 AI Billing Insights
+              </DialogTitle>
+              <DialogDescription>
+                Comprehensive analysis of your restaurant's sales performance and customer behavior
+              </DialogDescription>
+            </DialogHeader>
+            <div className="overflow-y-auto max-h-[60vh] pr-2">
+              <div className="space-y-4">
+                {aiInsights ? (
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div 
+                      className="whitespace-pre-wrap text-sm leading-relaxed"
+                      style={{ 
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        lineHeight: '1.6'
+                      }}
+                    >
+                      {aiInsights.split('\n').map((line, index) => {
+                        // Handle different types of formatting
+                        if (line.startsWith('**') && line.endsWith('**')) {
+                          // Bold headers
+                          return (
+                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
+                              {line.replace(/\*\*/g, '')}
+                            </h3>
+                          );
+                        } else if (line.startsWith('###') || line.startsWith('##')) {
+                          // Markdown headers
+                          return (
+                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
+                              {line.replace(/^#+\s*/, '')}
+                            </h3>
+                          );
+                        } else if (line.startsWith('- ') || line.startsWith('• ')) {
+                          // Bullet points
+                          return (
+                            <div key={index} className="ml-4 mb-1 flex items-start">
+                              <span className="text-primary mr-2">•</span>
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        } else if (line.includes('₹') && line.includes(':')) {
+                          // Financial data lines
+                          return (
+                            <div key={index} className="font-medium bg-muted/50 p-2 rounded mb-1">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        } else if (line.trim() === '' || line.trim() === '---') {
+                          // Empty lines or separators for spacing
+                          return <div key={index} className="h-2"></div>;
+                        } else {
+                          // Regular text with bold formatting
+                          return (
+                            <p key={index} className="mb-2">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }}></span>
+                            </p>
+                          );
+                        }
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No insights available at this time.
+                  </div>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="border-t pt-4">
+              <Button variant="outline" onClick={() => setShowAiInsights(false)}>
+                Close Analysis
+              </Button>
+              <Button onClick={handleGetAiInsights} disabled={loadingInsights}>
+                {loadingInsights ? 'Refreshing...' : 'Refresh Insights'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
