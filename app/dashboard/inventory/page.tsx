@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase, type InventoryItem, type InventoryCategory } from "@/lib/supabase"
-import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical, Trash2 } from "lucide-react"
+import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical, Trash2, Bot, Sprout, BarChart3 } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -27,7 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getInventorySuggestions } from "@/models/InventoryAgent"
+import { getInventorySuggestions, getComprehensiveInventoryInsights, getSeasonalInventoryRecommendations, getInventoryOptimizationPlan, getAutoIngredientSuggestions } from "@/models/InventoryAgent"
 
 export default function InventoryDashboard() {
   const { toast } = useToast()
@@ -452,12 +452,58 @@ export default function InventoryDashboard() {
   };
 
   const handleGetAiSuggestions = async () => {
-    const suggestions = await getInventorySuggestions(
-      "Current inventory:\n" +
-        inventory.map((item) => `${item.name}: ${item.quantity}`).join("\n")
-    );
-    setAiSuggestions(suggestions || "No suggestions available.");
-    setShowAiSuggestions(true);
+    try {
+      // Get comprehensive inventory analysis
+      const comprehensiveData = {
+        inventoryItems: inventory,
+        timeRange: "current",
+        seasonalContext: new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
+        restaurantType: "Indian Restaurant"
+      };
+      
+      const insights = await getComprehensiveInventoryInsights(comprehensiveData);
+      setAiSuggestions(insights || "No insights available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting inventory insights:', error);
+      // Fallback to basic suggestions
+      const suggestions = await getInventorySuggestions(
+        "Current inventory:\n" +
+          inventory.map((item) => `${item.name}: ${item.quantity}`).join("\n")
+      );
+      setAiSuggestions(suggestions || "No suggestions available.");
+      setShowAiSuggestions(true);
+    }
+  };
+
+  const handleGetSeasonalRecommendations = async () => {
+    try {
+      const seasonalInsights = await getSeasonalInventoryRecommendations();
+      setAiSuggestions(seasonalInsights || "No seasonal recommendations available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting seasonal recommendations:', error);
+      setAiSuggestions("Unable to get seasonal recommendations at this time.");
+      setShowAiSuggestions(true);
+    }
+  };
+
+  const handleGetOptimizationPlan = async () => {
+    try {
+      const optimizationData = {
+        inventoryItems: inventory,
+        timeRange: "monthly",
+        seasonalContext: new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
+      };
+      
+      const optimizationPlan = await getInventoryOptimizationPlan(optimizationData);
+      setAiSuggestions(optimizationPlan || "No optimization plan available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting optimization plan:', error);
+      setAiSuggestions("Unable to generate optimization plan at this time.");
+      setShowAiSuggestions(true);
+    }
   };
 
 
@@ -769,13 +815,32 @@ export default function InventoryDashboard() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm"
-                    onClick={handleGetAiSuggestions}
-                  >
-                    <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Get AI Suggestions
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 min-w-fit text-xs sm:text-sm"
+                      onClick={handleGetAiSuggestions}
+                    >
+                      <Bot className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Comprehensive Analysis
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 min-w-fit text-xs sm:text-sm"
+                      onClick={handleGetSeasonalRecommendations}
+                    >
+                      <Sprout className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Seasonal Insights
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 min-w-fit text-xs sm:text-sm"
+                      onClick={handleGetOptimizationPlan}
+                    >
+                      <BarChart3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Optimization Plan
+                    </Button>
+                  </div>
                   <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm">

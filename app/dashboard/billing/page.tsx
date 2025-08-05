@@ -1080,53 +1080,150 @@ export default function BillingDashboard() {
                     >
                       {aiInsights.split('\n').map((line, index) => {
                         // Handle different types of formatting
-                        if (line.startsWith('**') && line.endsWith('**')) {
-                          // Bold headers
-                          return (
-                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
-                              {line.replace(/\*\*/g, '')}
-                            </h3>
-                          );
-                        } else if (line.startsWith('###') || line.startsWith('##')) {
-                          // Markdown headers
-                          return (
-                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
-                              {line.replace(/^#+\s*/, '')}
-                            </h3>
-                          );
-                        } else if (line.startsWith('- ') || line.startsWith('• ')) {
-                          // Bullet points
-                          return (
-                            <div key={index} className="ml-4 mb-1 flex items-start">
-                              <span className="text-primary mr-2">•</span>
-                              <span dangerouslySetInnerHTML={{ 
-                                __html: line.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                              }}></span>
-                            </div>
-                          );
-                        } else if (line.includes('₹') && line.includes(':')) {
-                          // Financial data lines
-                          return (
-                            <div key={index} className="font-medium bg-muted/50 p-2 rounded mb-1">
-                              <span dangerouslySetInnerHTML={{ 
-                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                              }}></span>
-                            </div>
-                          );
-                        } else if (line.trim() === '' || line.trim() === '---') {
-                          // Empty lines or separators for spacing
+                        
+                        // Skip empty lines first
+                        if (line.trim() === '') {
                           return <div key={index} className="h-2"></div>;
-                        } else {
-                          // Regular text with bold formatting
+                        }
+                        
+                        // Handle separators
+                        if (line.trim() === '---' || line.trim().match(/^-{3,}$/)) {
+                          return <hr key={index} className="my-4 border-border" />;
+                        }
+                        
+                        // Handle bold headers (complete lines wrapped in **)
+                        if (line.match(/^\*\*.*\*\*$/)) {
                           return (
-                            <p key={index} className="mb-2">
-                              <span dangerouslySetInnerHTML={{ 
-                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                              }}></span>
-                            </p>
+                            <h3 key={index} className="font-bold text-lg mt-6 mb-3 text-primary border-b border-primary/20 pb-1">
+                              {line.replace(/^\*\*|\*\*$/g, '')}
+                            </h3>
                           );
                         }
-                      })}
+                        
+                        // Handle markdown headers (### ## #)
+                        if (line.match(/^#{1,4}\s+/)) {
+                          const level = line.match(/^(#{1,4})/)?.[1].length || 1;
+                          const text = line.replace(/^#{1,4}\s*/, '');
+                          const sizeClass = level === 1 ? 'text-xl' : level === 2 ? 'text-lg' : 'text-base';
+                          return (
+                            <h3 key={index} className={`font-bold ${sizeClass} mt-5 mb-3 text-primary border-b border-primary/20 pb-1`}>
+                              {text}
+                            </h3>
+                          );
+                        }
+                        
+                        // Handle table rows (containing |)
+                        if (line.includes('|') && line.split('|').length >= 3) {
+                          const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+                          
+                          // Skip separator rows (like |---|---|---|)
+                          if (cells.every(cell => cell.match(/^-+$/))) {
+                            return null;
+                          }
+                          
+                          // Check if this is a header row (next line might be separators)
+                          const nextLine = aiInsights.split('\n')[index + 1];
+                          const isHeader = nextLine && nextLine.includes('|') && 
+                                         nextLine.split('|').some(cell => cell.trim().match(/^-+$/));
+                          
+                          return (
+                            <div key={index} className="my-2">
+                              <table className="w-full border-collapse">
+                                <tbody>
+                                  <tr className={isHeader ? "bg-muted/50 border-b-2 border-primary/20" : "border-b border-border"}>
+                                    {cells.map((cell, cellIndex) => (
+                                      <td 
+                                        key={cellIndex} 
+                                        className={`px-3 py-2 text-sm ${isHeader ? 'font-semibold text-primary' : ''}`}
+                                        dangerouslySetInnerHTML={{ 
+                                          __html: cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                                        }}
+                                      ></td>
+                                    ))}
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle bullet points
+                        if (line.match(/^[\s]*[-•*]\s+/)) {
+                          const indent = (line.match(/^(\s*)/)?.[1].length || 0) / 2;
+                          const content = line.replace(/^[\s]*[-•*]\s+/, '');
+                          return (
+                            <div key={index} className={`mb-2 flex items-start ml-${indent * 4}`}>
+                              <span className="text-primary mr-2 mt-0.5">•</span>
+                              <span 
+                                className="flex-1"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                                }}
+                              ></span>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle numbered lists
+                        if (line.match(/^\s*\d+\.\s+/)) {
+                          const content = line.replace(/^\s*\d+\.\s+/, '');
+                          return (
+                            <div key={index} className="mb-2 flex items-start">
+                              <span className="text-primary mr-2 mt-0.5 font-medium">
+                                {line.match(/^\s*(\d+)\./)?.[1]}.
+                              </span>
+                              <span 
+                                className="flex-1"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                                }}
+                              ></span>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle financial/metric lines (containing ₹ and :)
+                        if (line.includes('₹') && line.includes(':')) {
+                          return (
+                            <div key={index} className="font-medium bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-3 rounded-r mb-2">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-green-700 dark:text-green-300">$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle lines with percentages and metrics
+                        if (line.match(/\d+%|\d+\.\d+%/) || line.includes('orders') || line.includes('revenue')) {
+                          return (
+                            <div key={index} className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-2 rounded-r mb-2">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-700 dark:text-blue-300">$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle action items or recommendations (lines with "Recommend", "Suggest", "Action")
+                        if (line.match(/(recommend|suggest|action|should|must|need to)/i)) {
+                          return (
+                            <div key={index} className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-2 rounded-r mb-2">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-amber-700 dark:text-amber-300">$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle regular paragraphs with bold formatting
+                        return (
+                          <p key={index} className="mb-3 leading-relaxed">
+                            <span dangerouslySetInnerHTML={{ 
+                              __html: line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') 
+                            }}></span>
+                          </p>
+                        );
+                      }).filter(Boolean)}
                     </div>
                   </div>
                 ) : (

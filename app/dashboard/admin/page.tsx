@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { supabase, type Order, type Payment } from "@/lib/supabase"
-import { ArrowDown, ArrowUp, CreditCard, DollarSign, ShoppingBag, Users } from "lucide-react"
+import { ArrowDown, ArrowUp, CreditCard, DollarSign, ShoppingBag, Users, Bot, Target, ClipboardList, Settings, Users2, BarChart3, RotateCcw } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   Bar,
@@ -21,6 +22,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { getAdminAssistantInsights, getStrategicBusinessPlan, getOperationalEfficiencyAnalysis, getCustomerInsightsAnalysis, getCompetitiveAnalysisReport, getBusinessIntelligenceDashboard } from "@/models/AdminAssistant"
 
 export default function AdminDashboard() {
   // State
@@ -42,6 +44,9 @@ export default function AdminDashboard() {
   const [topSellingItems, setTopSellingItems] = useState<any[]>([])
   const [weeklyRevenueData, setWeeklyRevenueData] = useState<any[]>([])
   const [yearlyRevenueData, setYearlyRevenueData] = useState<any[]>([])
+  const [aiInsights, setAiInsights] = useState<string | null>(null)
+  const [showAiInsights, setShowAiInsights] = useState(false)
+  const [loadingInsights, setLoadingInsights] = useState(false)
 
   // Fetch data on component mount
   useEffect(() => {
@@ -322,6 +327,124 @@ export default function AdminDashboard() {
     return colors[seed % colors.length]
   }
 
+  // AI Assistant Functions
+  const handleGetAdminInsights = async () => {
+    setLoadingInsights(true)
+    try {
+      const adminData = {
+        orders,
+        payments,
+        orderItems,
+        menuItems,
+        menuCategories,
+        timeRange: "current_period"
+      }
+      
+      const insights = await getAdminAssistantInsights(adminData)
+      setAiInsights(insights || "No insights available.")
+      setShowAiInsights(true)
+    } catch (error) {
+      console.error('Error getting admin insights:', error)
+      setAiInsights("Unable to generate insights at this time.")
+      setShowAiInsights(true)
+    } finally {
+      setLoadingInsights(false)
+    }
+  }
+
+  const handleGetStrategicPlan = async () => {
+    setLoadingInsights(true)
+    try {
+      const adminData = {
+        orders,
+        payments,
+        orderItems,
+        menuItems,
+        menuCategories,
+        timeRange: "quarterly"
+      }
+      
+      const strategicPlan = await getStrategicBusinessPlan(adminData, "quarterly")
+      setAiInsights(strategicPlan || "No strategic plan available.")
+      setShowAiInsights(true)
+    } catch (error) {
+      console.error('Error getting strategic plan:', error)
+      setAiInsights("Unable to generate strategic plan at this time.")
+      setShowAiInsights(true)
+    } finally {
+      setLoadingInsights(false)
+    }
+  }
+
+  const handleGetOperationalAnalysis = async () => {
+    setLoadingInsights(true)
+    try {
+      const adminData = {
+        orders,
+        payments,
+        orderItems,
+        menuItems,
+        menuCategories
+      }
+      
+      const operationalAnalysis = await getOperationalEfficiencyAnalysis(adminData)
+      setAiInsights(operationalAnalysis || "No operational analysis available.")
+      setShowAiInsights(true)
+    } catch (error) {
+      console.error('Error getting operational analysis:', error)
+      setAiInsights("Unable to generate operational analysis at this time.")
+      setShowAiInsights(true)
+    } finally {
+      setLoadingInsights(false)
+    }
+  }
+
+  const handleGetCustomerInsights = async () => {
+    setLoadingInsights(true)
+    try {
+      const adminData = {
+        orders,
+        payments,
+        orderItems,
+        menuItems,
+        menuCategories
+      }
+      
+      const customerInsights = await getCustomerInsightsAnalysis(adminData)
+      setAiInsights(customerInsights || "No customer insights available.")
+      setShowAiInsights(true)
+    } catch (error) {
+      console.error('Error getting customer insights:', error)
+      setAiInsights("Unable to generate customer insights at this time.")
+      setShowAiInsights(true)
+    } finally {
+      setLoadingInsights(false)
+    }
+  }
+
+  const handleGetBusinessIntelligence = async () => {
+    setLoadingInsights(true)
+    try {
+      const adminData = {
+        orders,
+        payments,
+        orderItems,
+        menuItems,
+        menuCategories
+      }
+      
+      const businessIntelligence = await getBusinessIntelligenceDashboard(adminData)
+      setAiInsights(businessIntelligence || "No business intelligence available.")
+      setShowAiInsights(true)
+    } catch (error) {
+      console.error('Error getting business intelligence:', error)
+      setAiInsights("Unable to generate business intelligence at this time.")
+      setShowAiInsights(true)
+    } finally {
+      setLoadingInsights(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container py-6">
@@ -342,6 +465,69 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Overview of restaurant performance</p>
         </div>
+
+        {/* AI Assistant Section */}
+        <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              Supreme Admin Assistant
+              <span className="text-sm font-normal text-muted-foreground">- Your AI Business Intelligence Partner</span>
+            </CardTitle>
+            <CardDescription>
+              Get comprehensive business insights, strategic planning, and operational optimization recommendations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+              <Button 
+                onClick={handleGetAdminInsights} 
+                disabled={loadingInsights}
+                variant="outline"
+                className="w-full"
+              >
+                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <Target className="mr-2 h-4 w-4" />}
+                Executive Insights
+              </Button>
+              <Button 
+                onClick={handleGetStrategicPlan} 
+                disabled={loadingInsights}
+                variant="outline"
+                className="w-full"
+              >
+                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <ClipboardList className="mr-2 h-4 w-4" />}
+                Strategic Plan
+              </Button>
+              <Button 
+                onClick={handleGetOperationalAnalysis} 
+                disabled={loadingInsights}
+                variant="outline"
+                className="w-full"
+              >
+                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <Settings className="mr-2 h-4 w-4" />}
+                Operations
+              </Button>
+              <Button 
+                onClick={handleGetCustomerInsights} 
+                disabled={loadingInsights}
+                variant="outline"
+                className="w-full"
+              >
+                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <Users2 className="mr-2 h-4 w-4" />}
+                Customers
+              </Button>
+              <Button 
+                onClick={handleGetBusinessIntelligence} 
+                disabled={loadingInsights}
+                variant="outline"
+                className="w-full"
+              >
+                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <BarChart3 className="mr-2 h-4 w-4" />}
+                BI Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -603,6 +789,99 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* AI Insights Dialog */}
+      {showAiInsights && (
+        <Dialog open={showAiInsights} onOpenChange={setShowAiInsights}>
+          <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                🤖 Supreme Admin Assistant - Business Intelligence Report
+              </DialogTitle>
+              <DialogDescription>
+                Comprehensive strategic insights and recommendations for your restaurant business
+              </DialogDescription>
+            </DialogHeader>
+            <div className="overflow-y-auto max-h-[65vh] pr-2">
+              <div className="space-y-4">
+                {aiInsights ? (
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div 
+                      className="whitespace-pre-wrap text-sm leading-relaxed"
+                      style={{ 
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        lineHeight: '1.6'
+                      }}
+                    >
+                      {aiInsights.split('\n').map((line, index) => {
+                        // Handle different types of formatting
+                        if (line.startsWith('**') && line.endsWith('**')) {
+                          // Bold headers
+                          return (
+                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
+                              {line.replace(/\*\*/g, '')}
+                            </h3>
+                          );
+                        } else if (line.startsWith('###') || line.startsWith('##')) {
+                          // Markdown headers
+                          return (
+                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
+                              {line.replace(/^#+\s*/, '')}
+                            </h3>
+                          );
+                        } else if (line.startsWith('- ') || line.startsWith('• ')) {
+                          // Bullet points
+                          return (
+                            <div key={index} className="ml-4 mb-1 flex items-start">
+                              <span className="text-primary mr-2">•</span>
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        } else if (line.includes('₹') && line.includes(':')) {
+                          // Financial data lines
+                          return (
+                            <div key={index} className="font-medium bg-muted/50 p-2 rounded mb-1">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }}></span>
+                            </div>
+                          );
+                        } else if (line.trim() === '' || line.trim() === '---') {
+                          // Empty lines or separators for spacing
+                          return <div key={index} className="h-2"></div>;
+                        } else {
+                          // Regular text with bold formatting
+                          return (
+                            <p key={index} className="mb-2">
+                              <span dangerouslySetInnerHTML={{ 
+                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }}></span>
+                            </p>
+                          );
+                        }
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No insights available at this time.
+                  </div>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="border-t pt-4">
+              <Button variant="outline" onClick={() => setShowAiInsights(false)}>
+                Close Report
+              </Button>
+              <Button onClick={handleGetAdminInsights} disabled={loadingInsights}>
+                {loadingInsights ? 'Generating...' : 'Refresh Insights'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

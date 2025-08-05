@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera } from "lucide-react"
 import { supabase } from "@/lib/supabase";
 import CameraRecognition from "./image-ocr/camerarecog";
 
-import { getMenuSuggestions } from "@/models/MenuAgent";
+import { getMenuSuggestions, getComprehensiveMenuAnalysis, getSeasonalMenuRecommendations, getMenuEngineeringAnalysis, getAutoMenuCreation } from "@/models/MenuAgent";
 
 export default function MenuPage() {
   const [activeTab, setActiveTab] = useState("items");
@@ -28,6 +28,7 @@ export default function MenuPage() {
     category_id: number;
     unit: string;
     quantity: number;
+    price: number;
   }
   interface InventoryCategory {
     id: number;
@@ -729,12 +730,76 @@ export default function MenuPage() {
   };
 
   const handleGetAiSuggestions = async () => {
-    const suggestions = await getMenuSuggestions(
-      "Current menu:\n" +
-        menuItems.map((item) => item.name).join("\n")
-    );
-    setAiSuggestions(suggestions || "No suggestions available.");
-    setShowAiSuggestions(true);
+    try {
+      // Get comprehensive menu analysis
+      const menuAnalysisData = {
+        menuItems,
+        menuCategories,
+        inventoryItems,
+        timeRange: "current",
+        seasonalContext: new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
+      };
+      
+      const insights = await getComprehensiveMenuAnalysis(menuAnalysisData);
+      setAiSuggestions(insights || "No insights available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting menu analysis:', error);
+      // Fallback to basic suggestions
+      const suggestions = await getMenuSuggestions(
+        "Current menu:\n" +
+          menuItems.map((item) => item.name).join("\n")
+      );
+      setAiSuggestions(suggestions || "No suggestions available.");
+      setShowAiSuggestions(true);
+    }
+  };
+
+  const handleGetSeasonalMenuRecommendations = async () => {
+    try {
+      const seasonalInsights = await getSeasonalMenuRecommendations();
+      setAiSuggestions(seasonalInsights || "No seasonal recommendations available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting seasonal menu recommendations:', error);
+      setAiSuggestions("Unable to get seasonal menu recommendations at this time.");
+      setShowAiSuggestions(true);
+    }
+  };
+
+  const handleGetMenuEngineering = async () => {
+    try {
+      const menuEngineeringData = {
+        menuItems,
+        menuCategories,
+        inventoryItems,
+        timeRange: "monthly"
+      };
+      
+      const engineeringAnalysis = await getMenuEngineeringAnalysis(menuEngineeringData);
+      setAiSuggestions(engineeringAnalysis || "No menu engineering analysis available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting menu engineering analysis:', error);
+      setAiSuggestions("Unable to generate menu engineering analysis at this time.");
+      setShowAiSuggestions(true);
+    }
+  };
+
+  const handleAutoMenuCreation = async () => {
+    try {
+      const autoMenuInsights = await getAutoMenuCreation(
+        inventoryItems, 
+        "All Categories", 
+        "₹100-500"
+      );
+      setAiSuggestions(autoMenuInsights || "No auto menu creation available.");
+      setShowAiSuggestions(true);
+    } catch (error) {
+      console.error('Error getting auto menu creation:', error);
+      setAiSuggestions("Unable to create automatic menu suggestions at this time.");
+      setShowAiSuggestions(true);
+    }
   };
 
   if (loading) {
@@ -817,13 +882,32 @@ export default function MenuPage() {
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Add Item</span>
               </button>
-              <button
-                onClick={handleGetAiSuggestions}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-md text-sm sm:text-base"
-              >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Get AI Suggestions</span>
-              </button>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button
+                  onClick={handleGetAiSuggestions}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
+                >
+                  🤖 <span className="hidden sm:inline">Menu Analysis</span>
+                </button>
+                <button
+                  onClick={handleGetSeasonalMenuRecommendations}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
+                >
+                  🌱 <span className="hidden sm:inline">Seasonal Menu</span>
+                </button>
+                <button
+                  onClick={handleGetMenuEngineering}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
+                >
+                  📊 <span className="hidden sm:inline">Engineering</span>
+                </button>
+                <button
+                  onClick={handleAutoMenuCreation}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
+                >
+                  ✨ <span className="hidden sm:inline">Auto Create</span>
+                </button>
+              </div>
             </div>
           </div>
 
