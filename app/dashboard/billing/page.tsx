@@ -18,46 +18,20 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase, type Table, type OrderItem, type MenuItem } from "@/lib/supabase"
+import { supabase, type TableRow, type OrderItemWithMenuItem, type MenuItem, type Order, type PaymentWithOrder } from "@/lib/supabase"
 import { CreditCard, Download, Printer, Receipt, Wallet, AlertTriangle } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { getBillingInsights, getQuickInsights } from "@/models/BillingAgent";
 
 // Define types matching database constraints
-type Order = {
-  id: number
-  table_id: number
-  waiter_id?: string
-  status: "pending" | "preparing" | "ready" | "served" | "paid"
-  notes?: string
-  subtotal: number
-  discount: number
-  total: number
-  payment_method?: "cash" | "card" | "upi" | "qr"
-  created_at: string
-  updated_at: string
-  tables?: Table
-  menu_items?: MenuItem
-}
-
-type Payment = {
-  id: number
-  order_id: number
-  amount: number
-  payment_method: string
-  transaction_id?: string
-  status: "pending" | "completed" | "failed" | "refunded"
-  processed_by?: string
-  created_at: string
-  orders?: Order
-}
+// Remove local type definitions since we're importing them from supabase.ts
 
 type TableBill = {
-  table: Table
+  table: TableRow
   orders: Order[]
   totalAmount: number
-  pendingPayment: Payment
+  pendingPayment: PaymentWithOrder
 }
 
 type PaymentMethod = "cash" | "card" | "upi" | "qr"
@@ -82,8 +56,8 @@ export default function BillingDashboard() {
 
   // State
   const [tableBills, setTableBills] = useState<TableBill[]>([])
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([])
-  const [completedPayments, setCompletedPayments] = useState<Payment[]>([])
+  const [orderItems, setOrderItems] = useState<OrderItemWithMenuItem[]>([])
+  const [completedPayments, setCompletedPayments] = useState<PaymentWithOrder[]>([])
   const [selectedTableBill, setSelectedTableBill] = useState<TableBill | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
   const [additionalDiscount, setAdditionalDiscount] = useState<number>(0)
@@ -285,7 +259,7 @@ export default function BillingDashboard() {
 
         // Check each ingredient
         for (const ingredient of ingredients || []) {
-          const requiredQuantity = ingredient.quantity_required * totalQuantity
+          const requiredQuantity = ingredient.quantity_required * Number(totalQuantity)
           const availableQuantity = ingredient.inventory_items?.quantity || 0
 
           if (requiredQuantity > availableQuantity) {
@@ -340,7 +314,7 @@ export default function BillingDashboard() {
         if (error) throw error
 
         for (const ingredient of ingredients || []) {
-          const quantityUsed = ingredient.quantity_required * totalQuantity
+          const quantityUsed = ingredient.quantity_required * Number(totalQuantity)
           const existingUpdate = inventoryUpdates.find(u => u.inventoryItemId === ingredient.inventory_item_id)
           
           if (existingUpdate) {

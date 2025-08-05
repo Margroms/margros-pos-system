@@ -18,7 +18,7 @@ import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase, type InventoryItem, type InventoryCategory } from "@/lib/supabase"
+import { supabase, type InventoryItemWithCategory, type InventoryCategory } from "@/lib/supabase"
 import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical, Trash2, Bot, Sprout, BarChart3 } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
@@ -33,11 +33,11 @@ export default function InventoryDashboard() {
   const { toast } = useToast()
 
   // State
-  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [inventory, setInventory] = useState<InventoryItemWithCategory[]>([])
   const [categories, setCategories] = useState<InventoryCategory[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
-  const [newItem, setNewItem] = useState<Omit<InventoryItem, "id" | "created_at" | "updated_at">>({
+  const [newItem, setNewItem] = useState<Omit<InventoryItemWithCategory, "id" | "created_at" | "updated_at" | "inventory_categories">>({
     name: "",
     category_id: 1,
     quantity: 0,
@@ -57,7 +57,7 @@ export default function InventoryDashboard() {
   const [csvUploading, setCsvUploading] = useState(false)
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
+  const [editingItem, setEditingItem] = useState<InventoryItemWithCategory | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteAll, setDeleteAll] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string | null>(null)
@@ -514,7 +514,7 @@ export default function InventoryDashboard() {
   };
 
   // Open edit item dialog
-  const openEditItemDialog = (item: InventoryItem) => {
+  const openEditItemDialog = (item: InventoryItemWithCategory) => {
     setEditingItem(item);
     setNewItem({
       name: item.name,
@@ -555,7 +555,7 @@ export default function InventoryDashboard() {
   }
 
   // Get stock level status
-  const getStockStatus = (item: InventoryItem) => {
+  const getStockStatus = (item: InventoryItemWithCategory) => {
     if (item.quantity <= item.restock_threshold * 0.5) {
       return "critical"
     } else if (item.quantity <= item.restock_threshold) {
@@ -1135,9 +1135,9 @@ const InventoryList = ({
   onSelectItem,
   onDeleteItem,
 }: {
-  items: InventoryItem[];
+  items: InventoryItemWithCategory[];
   onUpdate: () => void;
-  onEdit: (item: InventoryItem) => void;
+  onEdit: (item: InventoryItemWithCategory) => void;
   selectedItems: number[];
   onSelectItem: (id: number) => void;
   onDeleteItem: (id: number) => void;
@@ -1207,7 +1207,7 @@ const InventoryList = ({
     }
   }
 
-  const getStockStatus = (item: InventoryItem) => {
+  const getStockStatus = (item: InventoryItemWithCategory) => {
     if (item.quantity <= item.restock_threshold * 0.5) return "critical"
     if (item.quantity <= item.restock_threshold) return "low"
     return "normal"
