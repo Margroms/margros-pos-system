@@ -463,7 +463,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Overview of restaurant performance</p>
+          <p className="text-muted-foreground">Overview of Restaurant performance</p>
         </div>
 
         {/* AI Assistant Section */}
