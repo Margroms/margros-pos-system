@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera, Bot, Sprout, BarChart3, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CameraRecognition from "./image-ocr/camerarecog";
 
@@ -887,25 +887,29 @@ export default function MenuPage() {
                   onClick={handleGetAiSuggestions}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  🤖 <span className="hidden sm:inline">Menu Analysis</span>
+                  <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Menu Analysis</span>
                 </button>
                 <button
                   onClick={handleGetSeasonalMenuRecommendations}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  🌱 <span className="hidden sm:inline">Seasonal Menu</span>
+                  <Sprout className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Seasonal Menu</span>
                 </button>
                 <button
                   onClick={handleGetMenuEngineering}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  📊 <span className="hidden sm:inline">Engineering</span>
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Engineering</span>
                 </button>
                 <button
                   onClick={handleAutoMenuCreation}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  ✨ <span className="hidden sm:inline">Auto Create</span>
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Auto Create</span>
                 </button>
               </div>
             </div>
