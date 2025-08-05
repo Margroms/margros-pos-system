@@ -796,7 +796,8 @@ export default function AdminDashboard() {
           <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                🤖 Supreme Admin Assistant - Business Intelligence Report
+                <Bot className="h-5 w-5" />
+                Supreme Admin Assistant - Business Intelligence Report
               </DialogTitle>
               <DialogDescription>
                 Comprehensive strategic insights and recommendations for your restaurant business
