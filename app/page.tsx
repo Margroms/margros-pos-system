@@ -1,11 +1,28 @@
+"use client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChefHat, ClipboardList, CreditCard, Home, Package } from "lucide-react"
-import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { useState } from "react"
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      alert(error.message)
+    } else {
+      window.location.href = "/dashboard"
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted p-4 sm:p-6">
       <div className="w-full max-w-md">
@@ -22,6 +39,8 @@ export default function LoginPage() {
                 placeholder="name@example.com" 
                 type="email" 
                 className="h-11"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -31,45 +50,20 @@ export default function LoginPage() {
                 placeholder="••••••••" 
                 type="password" 
                 className="h-11"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 pt-2">
-            <Button className="w-full h-11 text-base" asChild>
-              <Link href="/dashboard">Sign In</Link>
+            <Button className="w-full h-11 text-base" onClick={handleLogin}>
+              Sign In
             </Button>
-            <div className="text-center text-sm text-muted-foreground">Select your role to preview:</div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" size="sm" className="h-11 text-xs" asChild>
-                <Link href="/dashboard/waiter">
-                  <Home className="mr-1.5 h-4 w-4" />
-                  <span>Waiter</span>
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" className="h-11 text-xs" asChild>
-                <Link href="/dashboard/admin">
-                  <ClipboardList className="mr-1.5 h-4 w-4" />
-                  <span>Admin</span>
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" className="h-11 text-xs" asChild>
-                <Link href="/dashboard/kitchen">
-                  <ChefHat className="mr-1.5 h-4 w-4" />
-                  <span>Kitchen</span>
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" className="h-11 text-xs" asChild>
-                <Link href="/dashboard/billing">
-                  <CreditCard className="mr-1.5 h-4 w-4" />
-                  <span>Billing</span>
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" className="col-span-2 h-11 text-xs" asChild>
-                <Link href="/dashboard/inventory">
-                  <Package className="mr-1.5 h-4 w-4" />
-                  <span>Inventory</span>
-                </Link>
-              </Button>
+            <div className="text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <a href="/signup" className="underline">
+                Sign up
+              </a>
             </div>
           </CardFooter>
         </Card>
