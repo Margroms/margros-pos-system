@@ -16,27 +16,22 @@ export function MainNav({ className, role }: MainNavProps) {
   const roleLinks = {
     waiter: [
       { href: "/dashboard/waiter", label: "Tables", icon: Home },
-      { href: "/dashboard/waiter/orders", label: "Orders", icon: ClipboardList },
     ],
     admin: [
       { href: "/dashboard/admin", label: "Overview", icon: Home },
-      { href: "/dashboard/admin/menu", label: "Menu Manager", icon: ClipboardList },
-      { href: "/dashboard/admin/tables", label: "Table Layout", icon: Settings },
-      { href: "/dashboard/admin/staff", label: "Staff", icon: User },
-      { href: "/dashboard/admin/reports", label: "Reports", icon: ClipboardList },
+      { href: "/dashboard/kitchen", label: "Kitchen", icon: ChefHat },
+      { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+      { href: "/dashboard/inventory", label: "Inventory", icon: Package },
+ 
     ],
     kitchen: [
       { href: "/dashboard/kitchen", label: "Orders Queue", icon: ChefHat },
-      { href: "/dashboard/kitchen/history", label: "History", icon: ClipboardList },
     ],
     billing: [
       { href: "/dashboard/billing", label: "Active Bills", icon: CreditCard },
-      { href: "/dashboard/billing/history", label: "Payment History", icon: ClipboardList },
     ],
     inventory: [
       { href: "/dashboard/inventory", label: "Overview", icon: Package },
-      { href: "/dashboard/inventory/items", label: "Items", icon: ClipboardList },
-      { href: "/dashboard/inventory/reports", label: "Reports", icon: ClipboardList },
     ],
   }
 

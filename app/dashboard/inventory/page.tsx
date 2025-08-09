@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getInventorySuggestions, getComprehensiveInventoryInsights, getSeasonalInventoryRecommendations, getInventoryOptimizationPlan, getAutoIngredientSuggestions } from "@/models/InventoryAgent"
+import MarkdownRenderer from "@/components/markdown-renderer"
 
 export default function InventoryDashboard() {
   const { toast } = useToast()
@@ -1112,9 +1113,11 @@ export default function InventoryDashboard() {
                 Here are some suggestions from our AI agent to help you manage your inventory.
               </DialogDescription>
             </DialogHeader>
-            <div className="prose">
-              <p>{aiSuggestions}</p>
-            </div>
+            {aiSuggestions ? (
+              <MarkdownRenderer content={aiSuggestions} />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">No suggestions available.</div>
+            )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAiSuggestions(false)}>
                 Close

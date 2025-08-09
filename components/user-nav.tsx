@@ -12,31 +12,56 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LogOut, Settings, User } from "lucide-react"
-import Link from "next/link"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
-interface UserNavProps {
-  name: string
-  email: string
-  role: string
-}
+export function UserNav() {
+  const router = useRouter()
+  const supabase = createClient()
+  const [email, setEmail] = useState<string>("")
+  const [name, setName] = useState<string>("User")
+  const [role, setRole] = useState<string>("")
 
-export function UserNav({ name, email, role }: UserNavProps) {
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!mounted) return
+      const userEmail = session?.user?.email || ""
+      setEmail(userEmail)
+      setName(session?.user?.user_metadata?.full_name || userEmail?.split("@")[0] || "User")
+      if (userEmail) {
+        const { data } = await supabase.from("users").select("role").eq("email", userEmail).single()
+        if (data?.role) setRole(data.role)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace("/")
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src="/placeholder.svg" alt={name} />
-            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{name}</p>
-            <p className="text-xs leading-none text-muted-foreground">{email}</p>
-            <p className="text-xs font-medium text-muted-foreground mt-1 capitalize">{role} Role</p>
+            <p className="text-sm font-medium leading-none truncate" title={name}>{name}</p>
+            <p className="text-xs leading-none text-muted-foreground truncate" title={email}>{email}</p>
+            {role && <p className="text-xs font-medium text-muted-foreground mt-1 capitalize">{role} Role</p>}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -51,11 +76,9 @@ export function UserNav({ name, email, role }: UserNavProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </Link>
+        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

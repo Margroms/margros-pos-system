@@ -23,6 +23,7 @@ import {
   YAxis,
 } from "recharts"
 import { getAdminAssistantInsights, getStrategicBusinessPlan, getOperationalEfficiencyAnalysis, getCustomerInsightsAnalysis, getCompetitiveAnalysisReport, getBusinessIntelligenceDashboard } from "@/models/AdminAssistant"
+import MarkdownRenderer from "@/components/markdown-renderer"
 
 export default function AdminDashboard() {
   // State
@@ -806,65 +807,7 @@ export default function AdminDashboard() {
             <div className="overflow-y-auto max-h-[65vh] pr-2">
               <div className="space-y-4">
                 {aiInsights ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <div 
-                      className="whitespace-pre-wrap text-sm leading-relaxed"
-                      style={{ 
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        lineHeight: '1.6'
-                      }}
-                    >
-                      {aiInsights.split('\n').map((line, index) => {
-                        // Handle different types of formatting
-                        if (line.startsWith('**') && line.endsWith('**')) {
-                          // Bold headers
-                          return (
-                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
-                              {line.replace(/\*\*/g, '')}
-                            </h3>
-                          );
-                        } else if (line.startsWith('###') || line.startsWith('##')) {
-                          // Markdown headers
-                          return (
-                            <h3 key={index} className="font-bold text-lg mt-4 mb-2 text-primary">
-                              {line.replace(/^#+\s*/, '')}
-                            </h3>
-                          );
-                        } else if (line.startsWith('- ') || line.startsWith('• ')) {
-                          // Bullet points
-                          return (
-                            <div key={index} className="ml-4 mb-1 flex items-start">
-                              <span className="text-primary mr-2">•</span>
-                              <span dangerouslySetInnerHTML={{ 
-                                __html: line.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                              }}></span>
-                            </div>
-                          );
-                        } else if (line.includes('₹') && line.includes(':')) {
-                          // Financial data lines
-                          return (
-                            <div key={index} className="font-medium bg-muted/50 p-2 rounded mb-1">
-                              <span dangerouslySetInnerHTML={{ 
-                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                              }}></span>
-                            </div>
-                          );
-                        } else if (line.trim() === '' || line.trim() === '---') {
-                          // Empty lines or separators for spacing
-                          return <div key={index} className="h-2"></div>;
-                        } else {
-                          // Regular text with bold formatting
-                          return (
-                            <p key={index} className="mb-2">
-                              <span dangerouslySetInnerHTML={{ 
-                                __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                              }}></span>
-                            </p>
-                          );
-                        }
-                      })}
-                    </div>
-                  </div>
+                  <MarkdownRenderer content={aiInsights} />
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     No insights available at this time.
