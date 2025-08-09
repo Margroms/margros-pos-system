@@ -19,9 +19,7 @@ export function MainNav({ className, role }: MainNavProps) {
     ],
     admin: [
       { href: "/dashboard/admin", label: "Overview", icon: Home },
-      { href: "/dashboard/kitchen", label: "Kitchen", icon: ChefHat },
-      { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-      { href: "/dashboard/inventory", label: "Inventory", icon: Package },
+      { href: "/dashboard/admin/menu", label: "Menu", icon: Package },
  
     ],
     kitchen: [
