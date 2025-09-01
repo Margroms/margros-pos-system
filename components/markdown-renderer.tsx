@@ -3,6 +3,8 @@
 import React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import remarkBreaks from "remark-breaks"
+import rehypeRaw from "rehype-raw"
 
 type MarkdownRendererProps = {
   content: string
@@ -19,7 +21,8 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
     ].join(" ")}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           h1: ({ node, ...props }) => <h2 {...props} />,
           h2: ({ node, ...props }) => <h3 {...props} />,

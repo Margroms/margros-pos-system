@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase, type InventoryItemWithCategory, type InventoryCategory } from "@/lib/supabase"
-import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical, Trash2, Bot, Sprout, BarChart3 } from "lucide-react"
+import { AlertTriangle, ArrowUp, Edit, Plus, Search, Trash, MoreVertical, Trash2, Bot, Sprout, BarChart3, RotateCcw } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -63,6 +63,7 @@ export default function InventoryDashboard() {
   const [deleteAll, setDeleteAll] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string | null>(null)
   const [showAiSuggestions, setShowAiSuggestions] = useState(false)
+  const [loadingAi, setLoadingAi] = useState(false)
 
   // Fetch data on component mount
   useEffect(() => {
@@ -453,6 +454,7 @@ export default function InventoryDashboard() {
   };
 
   const handleGetAiSuggestions = async () => {
+    setLoadingAi(true)
     try {
       // Get comprehensive inventory analysis
       const comprehensiveData = {
@@ -474,10 +476,13 @@ export default function InventoryDashboard() {
       );
       setAiSuggestions(suggestions || "No suggestions available.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false)
     }
   };
 
   const handleGetSeasonalRecommendations = async () => {
+    setLoadingAi(true)
     try {
       const seasonalInsights = await getSeasonalInventoryRecommendations();
       setAiSuggestions(seasonalInsights || "No seasonal recommendations available.");
@@ -486,10 +491,13 @@ export default function InventoryDashboard() {
       console.error('Error getting seasonal recommendations:', error);
       setAiSuggestions("Unable to get seasonal recommendations at this time.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false)
     }
   };
 
   const handleGetOptimizationPlan = async () => {
+    setLoadingAi(true)
     try {
       const optimizationData = {
         inventoryItems: inventory,
@@ -504,6 +512,8 @@ export default function InventoryDashboard() {
       console.error('Error getting optimization plan:', error);
       setAiSuggestions("Unable to generate optimization plan at this time.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false)
     }
   };
 
@@ -821,25 +831,49 @@ export default function InventoryDashboard() {
                       variant="outline"
                       className="flex-1 min-w-fit text-xs sm:text-sm"
                       onClick={handleGetAiSuggestions}
+                      disabled={loadingAi}
                     >
-                      <Bot className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Comprehensive Analysis
+                      {loadingAi ? (
+                        <>
+                          <RotateCcw className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> Generating…
+                        </>
+                      ) : (
+                        <>
+                          <Bot className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Comprehensive Analysis
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       className="flex-1 min-w-fit text-xs sm:text-sm"
                       onClick={handleGetSeasonalRecommendations}
+                      disabled={loadingAi}
                     >
-                      <Sprout className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Seasonal Insights
+                      {loadingAi ? (
+                        <>
+                          <RotateCcw className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> Generating…
+                        </>
+                      ) : (
+                        <>
+                          <Sprout className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Seasonal Insights
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       className="flex-1 min-w-fit text-xs sm:text-sm"
                       onClick={handleGetOptimizationPlan}
+                      disabled={loadingAi}
                     >
-                      <BarChart3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Optimization Plan
+                      {loadingAi ? (
+                        <>
+                          <RotateCcw className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> Generating…
+                        </>
+                      ) : (
+                        <>
+                          <BarChart3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Optimization Plan
+                        </>
+                      )}
                     </Button>
                   </div>
                   <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
@@ -1113,9 +1147,7 @@ export default function InventoryDashboard() {
                 Here are some suggestions from our AI agent to help you manage your inventory.
               </DialogDescription>
             </DialogHeader>
-            {aiSuggestions ? (
-              <MarkdownRenderer content={aiSuggestions} />
-            ) : (
+            {aiSuggestions ? <MarkdownRenderer content={aiSuggestions} /> : (
               <div className="text-center py-8 text-muted-foreground">No suggestions available.</div>
             )}
             <DialogFooter>

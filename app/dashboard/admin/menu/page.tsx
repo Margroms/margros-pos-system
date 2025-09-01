@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera, Bot, Sprout, BarChart3, Sparkles } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, ChefHat, Tag, Camera, Bot, Sprout, BarChart3, Sparkles, RotateCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CameraRecognition from "./image-ocr/camerarecog";
 
 import { getMenuSuggestions, getComprehensiveMenuAnalysis, getSeasonalMenuRecommendations, getMenuEngineeringAnalysis, getAutoMenuCreation } from "@/models/MenuAgent";
+import MarkdownRenderer from "@/components/markdown-renderer"
 
 export default function MenuPage() {
   const [activeTab, setActiveTab] = useState("items");
@@ -112,6 +113,7 @@ export default function MenuPage() {
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string | null>(null);
   const [showAiSuggestions, setShowAiSuggestions] = useState(false);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -730,6 +732,7 @@ export default function MenuPage() {
   };
 
   const handleGetAiSuggestions = async () => {
+    setLoadingAi(true);
     try {
       // Get comprehensive menu analysis
       const menuAnalysisData = {
@@ -752,10 +755,13 @@ export default function MenuPage() {
       );
       setAiSuggestions(suggestions || "No suggestions available.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false);
     }
   };
 
   const handleGetSeasonalMenuRecommendations = async () => {
+    setLoadingAi(true);
     try {
       const seasonalInsights = await getSeasonalMenuRecommendations();
       setAiSuggestions(seasonalInsights || "No seasonal recommendations available.");
@@ -764,10 +770,13 @@ export default function MenuPage() {
       console.error('Error getting seasonal menu recommendations:', error);
       setAiSuggestions("Unable to get seasonal menu recommendations at this time.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false);
     }
   };
 
   const handleGetMenuEngineering = async () => {
+    setLoadingAi(true);
     try {
       const menuEngineeringData = {
         menuItems,
@@ -783,10 +792,13 @@ export default function MenuPage() {
       console.error('Error getting menu engineering analysis:', error);
       setAiSuggestions("Unable to generate menu engineering analysis at this time.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false);
     }
   };
 
   const handleAutoMenuCreation = async () => {
+    setLoadingAi(true);
     try {
       const autoMenuInsights = await getAutoMenuCreation(
         inventoryItems, 
@@ -799,6 +811,8 @@ export default function MenuPage() {
       console.error('Error getting auto menu creation:', error);
       setAiSuggestions("Unable to create automatic menu suggestions at this time.");
       setShowAiSuggestions(true);
+    } finally {
+      setLoadingAi(false);
     }
   };
 
@@ -885,31 +899,67 @@ export default function MenuPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   onClick={handleGetAiSuggestions}
+                  disabled={loadingAi}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Menu Analysis</span>
+                  {loadingAi ? (
+                    <>
+                      <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Menu Analysis</span>
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={handleGetSeasonalMenuRecommendations}
+                  disabled={loadingAi}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  <Sprout className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Seasonal Menu</span>
+                  {loadingAi ? (
+                    <>
+                      <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Sprout className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Seasonal Menu</span>
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={handleGetMenuEngineering}
+                  disabled={loadingAi}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Engineering</span>
+                  {loadingAi ? (
+                    <>
+                      <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> Generating…
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Engineering</span>
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={handleAutoMenuCreation}
+                  disabled={loadingAi}
                   className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-2 sm:px-3 py-2 rounded-lg flex items-center justify-center space-x-1 shadow-md text-xs sm:text-sm"
                 >
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Auto Create</span>
+                  {loadingAi ? (
+                    <>
+                      <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="inline">Auto Create</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1573,9 +1623,9 @@ export default function MenuPage() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="prose">
-              <p>{aiSuggestions}</p>
-            </div>
+            {aiSuggestions ? <MarkdownRenderer content={aiSuggestions} /> : (
+              <div className="text-center py-8 text-muted-foreground">No suggestions available.</div>
+            )}
           </div>
         </div>
       )}

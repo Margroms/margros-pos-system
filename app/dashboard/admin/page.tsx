@@ -446,18 +446,18 @@ export default function AdminDashboard() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container py-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Loading dashboard...</p>
-          </div>
+  const LoadingView = (
+    <div className="container py-6">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading dashboard...</p>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+
+  if (loading) return LoadingView
 
   return (
     <div className="container py-6">
@@ -481,50 +481,60 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-              <Button 
-                onClick={handleGetAdminInsights} 
-                disabled={loadingInsights}
-                variant="outline"
-                className="w-full"
-              >
-                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <Target className="mr-2 h-4 w-4" />}
-                Executive Insights
+              <Button onClick={handleGetAdminInsights} disabled={loadingInsights} variant="outline" className="w-full">
+                {loadingInsights ? (
+                  <>
+                    <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Target className="mr-2 h-4 w-4" /> Executive Insights
+                  </>
+                )}
               </Button>
-              <Button 
-                onClick={handleGetStrategicPlan} 
-                disabled={loadingInsights}
-                variant="outline"
-                className="w-full"
-              >
-                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <ClipboardList className="mr-2 h-4 w-4" />}
-                Strategic Plan
+              <Button onClick={handleGetStrategicPlan} disabled={loadingInsights} variant="outline" className="w-full">
+                {loadingInsights ? (
+                  <>
+                    <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <ClipboardList className="mr-2 h-4 w-4" /> Strategic Plan
+                  </>
+                )}
               </Button>
-              <Button 
-                onClick={handleGetOperationalAnalysis} 
-                disabled={loadingInsights}
-                variant="outline"
-                className="w-full"
-              >
-                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <Settings className="mr-2 h-4 w-4" />}
-                Operations
+              <Button onClick={handleGetOperationalAnalysis} disabled={loadingInsights} variant="outline" className="w-full">
+                {loadingInsights ? (
+                  <>
+                    <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Settings className="mr-2 h-4 w-4" /> Operations
+                  </>
+                )}
               </Button>
-              <Button 
-                onClick={handleGetCustomerInsights} 
-                disabled={loadingInsights}
-                variant="outline"
-                className="w-full"
-              >
-                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <Users2 className="mr-2 h-4 w-4" />}
-                Customers
+              <Button onClick={handleGetCustomerInsights} disabled={loadingInsights} variant="outline" className="w-full">
+                {loadingInsights ? (
+                  <>
+                    <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Users2 className="mr-2 h-4 w-4" /> Customers
+                  </>
+                )}
               </Button>
-              <Button 
-                onClick={handleGetBusinessIntelligence} 
-                disabled={loadingInsights}
-                variant="outline"
-                className="w-full"
-              >
-                {loadingInsights ? <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> : <BarChart3 className="mr-2 h-4 w-4" />}
-                BI Dashboard
+              <Button onClick={handleGetBusinessIntelligence} disabled={loadingInsights} variant="outline" className="w-full">
+                {loadingInsights ? (
+                  <>
+                    <RotateCcw className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <BarChart3 className="mr-2 h-4 w-4" /> BI Dashboard
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

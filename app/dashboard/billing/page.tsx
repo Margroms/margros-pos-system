@@ -1044,21 +1044,15 @@ export default function BillingDashboard() {
             </DialogHeader>
             <div className="overflow-y-auto max-h-[60vh] pr-2">
               <div className="space-y-4">
-                {aiInsights ? (
-                  <MarkdownRenderer content={aiInsights} />
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No insights available at this time.
-                  </div>
+                {aiInsights ? <MarkdownRenderer content={aiInsights} /> : (
+                  <div className="text-center py-8 text-muted-foreground">No insights available at this time.</div>
                 )}
               </div>
             </div>
             <DialogFooter className="border-t pt-4">
-              <Button variant="outline" onClick={() => setShowAiInsights(false)}>
-                Close Analysis
-              </Button>
+              <Button variant="outline" onClick={() => setShowAiInsights(false)}>Close Analysis</Button>
               <Button onClick={handleGetAiInsights} disabled={loadingInsights}>
-                {loadingInsights ? 'Refreshing...' : 'Refresh Insights'}
+                {loadingInsights ? 'Refreshing…' : 'Refresh Insights'}
               </Button>
             </DialogFooter>
           </DialogContent>
