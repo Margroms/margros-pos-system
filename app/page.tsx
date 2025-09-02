@@ -13,6 +13,11 @@ export default function LoginPage() {
   const supabase = useMemo(() => createClient(), [])
 
   const handleLogin = async () => {
+    // AUTH SYSTEM COMMENTED OUT - DIRECT ACCESS TO DASHBOARD
+    window.location.href = "/dashboard/admin"
+    return
+    
+    /*
     if (loading) return
     setLoading(true)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -63,6 +68,7 @@ export default function LoginPage() {
       inventory: "/dashboard/inventory",
     }
     window.location.href = roleHome[role] || "/dashboard/waiter"
+    */
   }
 
   return (
@@ -71,11 +77,11 @@ export default function LoginPage() {
         <Card className="border-2">
           <CardHeader className="space-y-2 text-center pb-4">
             <CardTitle className="text-2xl sm:text-3xl font-bold">Restaurant POS</CardTitle>
-            <CardDescription className="text-sm sm:text-base">Enter your credentials to sign in</CardDescription>
+            <CardDescription className="text-sm sm:text-base">AUTH DISABLED - Click to access dashboard</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pb-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email (Optional)</Label>
               <Input 
                 id="email" 
                 placeholder="name@example.com" 
@@ -86,7 +92,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium">Password (Optional)</Label>
               <Input 
                 id="password" 
                 placeholder="••••••••" 
@@ -99,13 +105,10 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 pt-2">
             <Button className="w-full h-11 text-base" onClick={handleLogin} disabled={loading}>
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? "Accessing..." : "Access Dashboard"}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <a href="/signup" className="underline">
-                Sign up
-              </a>
+              Authentication is currently disabled
             </div>
           </CardFooter>
         </Card>

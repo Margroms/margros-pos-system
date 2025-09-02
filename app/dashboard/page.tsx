@@ -2,6 +2,10 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
 export default async function DashboardPage() {
+  // AUTH SYSTEM COMMENTED OUT - DIRECT ACCESS TO ADMIN DASHBOARD
+  redirect("/dashboard/admin")
+  
+  /*
   const supabase = createClient()
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
   console.log("/dashboard resolver: session", { hasSession: !!session, sessionError })
@@ -36,5 +40,6 @@ export default async function DashboardPage() {
     inventory: "/dashboard/inventory",
   }
   redirect(roleHome[role] || "/dashboard/waiter")
+  */
 }
 

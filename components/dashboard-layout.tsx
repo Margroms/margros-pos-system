@@ -82,38 +82,42 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <nav className="flex flex-col gap-2 px-2">
                     <MainNav className="flex flex-col items-start gap-4" role={role} />
                   </nav>
-                  {/* Mobile role switcher (visible only to admin) */}
-                  {role === 'admin' && (
-                    <div className="border-t pt-4 px-2">
-                      <div className="text-sm font-medium mb-3 text-muted-foreground">Switch Section</div>
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button variant="outline" size="sm" className="justify-start" asChild>
-                          <Link href="/dashboard/admin" onClick={() => setIsSidebarOpen(false)}>
-                            <ClipboardList className="mr-2 h-4 w-4" />
-                            Admin
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-start" asChild>
-                          <Link href="/dashboard/kitchen" onClick={() => setIsSidebarOpen(false)}>
-                            <ChefHat className="mr-2 h-4 w-4" />
-                            Kitchen
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-start" asChild>
-                          <Link href="/dashboard/billing" onClick={() => setIsSidebarOpen(false)}>
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            Billing
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-start" asChild>
-                          <Link href="/dashboard/inventory" onClick={() => setIsSidebarOpen(false)}>
-                            <Package className="mr-2 h-4 w-4" />
-                            Inventory
-                          </Link>
-                        </Button>
-                      </div>
+                  {/* AUTH DISABLED - SHOW ALL SECTIONS TO EVERYONE */}
+                  <div className="border-t pt-4 px-2">
+                    <div className="text-sm font-medium mb-3 text-muted-foreground">Switch Section</div>
+                    <div className="grid grid-cols-1 gap-2">
+                      <Button variant="outline" size="sm" className="justify-start" asChild>
+                        <Link href="/dashboard/admin" onClick={() => setIsSidebarOpen(false)}>
+                          <ClipboardList className="mr-2 h-4 w-4" />
+                          Admin
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start" asChild>
+                        <Link href="/dashboard/kitchen" onClick={() => setIsSidebarOpen(false)}>
+                          <ChefHat className="mr-2 h-4 w-4" />
+                          Kitchen
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start" asChild>
+                        <Link href="/dashboard/billing" onClick={() => setIsSidebarOpen(false)}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Billing
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start" asChild>
+                        <Link href="/dashboard/waiter" onClick={() => setIsSidebarOpen(false)}>
+                          <Home className="mr-2 h-4 w-4" />
+                          Waiter
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start" asChild>
+                        <Link href="/dashboard/inventory" onClick={() => setIsSidebarOpen(false)}>
+                          <Package className="mr-2 h-4 w-4" />
+                          Inventory
+                        </Link>
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
@@ -128,22 +132,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="hidden md:flex md:flex-1 md:items-center md:justify-between md:gap-10">
             <MainNav className="mx-6" role={role} />
             <div className="flex items-center gap-4">
-              {role === 'admin' && (
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/admin">Admin</Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/kitchen">Kitchen</Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/billing">Billing</Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/inventory">Inventory</Link>
-                  </Button>
-                </div>
-              )}
+              {/* AUTH DISABLED - SHOW ALL SECTIONS TO EVERYONE */}
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/admin">Admin</Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/kitchen">Kitchen</Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/billing">Billing</Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/waiter">Waiter</Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/inventory">Inventory</Link>
+                </Button>
+              </div>
               <ThemeToggle />
               <UserNav />
             </div>

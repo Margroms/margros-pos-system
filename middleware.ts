@@ -2,6 +2,10 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
+  // AUTH SYSTEM COMMENTED OUT - ALLOWING ALL ACCESS
+  return NextResponse.next()
+  
+  /*
   let response = NextResponse.next({
     request: { headers: request.headers },
   })
@@ -97,6 +101,7 @@ export async function middleware(request: NextRequest) {
   }
 
   return response
+  */
 }
 
 export const config = {

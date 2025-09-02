@@ -19,11 +19,15 @@ import { useRouter } from "next/navigation"
 export function UserNav() {
   const router = useRouter()
   const supabase = createClient()
-  const [email, setEmail] = useState<string>("")
-  const [name, setName] = useState<string>("User")
-  const [role, setRole] = useState<string>("")
+  
+  // AUTH SYSTEM COMMENTED OUT - STATIC USER INFO
+  const [email, setEmail] = useState<string>("admin@restaurant.com")
+  const [name, setName] = useState<string>("Admin User")
+  const [role, setRole] = useState<string>("admin")
 
   useEffect(() => {
+    // AUTH SYSTEM COMMENTED OUT - NO SESSION FETCHING
+    /*
     let mounted = true
     ;(async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -39,11 +43,16 @@ export function UserNav() {
     return () => {
       mounted = false
     }
+    */
   }, [])
 
   const handleLogout = async () => {
+    // AUTH SYSTEM COMMENTED OUT - SIMPLE REDIRECT
+    router.replace("/")
+    /*
     await supabase.auth.signOut()
     router.replace("/")
+    */
   }
 
   return (
